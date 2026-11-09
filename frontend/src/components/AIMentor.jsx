@@ -10,7 +10,7 @@ const QUICK_PROMPTS = [
   'Give me a risk checklist before entry.',
 ];
 
-const WELCOME_MESSAGE = "Hi, I'm Sarah — your AlphaSync mentor. I can help with product navigation, F&O basics, position risk checks, and safe trade steps. Tell me your question or paste your position details.";
+const WELCOME_MESSAGE = "Hi, I'm Sarah — your TradingBot mentor. I can help with product navigation, F&O basics, position risk checks, and safe trade steps. Tell me your question or paste your position details.";
 
 const toRecentMessages = (items, nextUserText = '') => {
   const next = [...(items || [])];

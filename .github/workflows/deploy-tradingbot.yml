@@ -34,27 +34,46 @@ jobs:
     name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.decide.outputs.backend }}
+      frontend: ${{ steps.decide.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@v3
         with:
-          base: ${{ github.event.before || 'HEAD~1' }}
           filters: |
             backend:
               - 'backend/**'
+              - 'docker-compose.tradingbot.yml'
+              - '.github/workflows/deploy-tradingbot.yml'
             frontend:
               - 'frontend/**'
+              - 'docker-compose.tradingbot.yml'
+              - '.github/workflows/deploy-tradingbot.yml'
+
+      - name: Decide build requirements
+        id: decide
+        run: |
+          FORCE="${{ github.event.inputs.force_rebuild }}"
+          if [ "${FORCE}" = "true" ] || [ "${{ github.event_name }}" != "push" ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=${{ steps.filter.outputs.backend }}" >> "$GITHUB_OUTPUT"
+            echo "frontend=${{ steps.filter.outputs.frontend }}" >> "$GITHUB_OUTPUT"
+          fi
 
 # ── Job 1a: Build & push backend ──────────────────────────────────────────────
   build-backend:
     name: Build Backend
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +86,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
 
       - name: Build and push backend image
         uses: docker/build-push-action@v6
@@ -77,14 +99,18 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}:latest
             ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=gha,scope=tradingbot-backend
+          cache-from: |
+            type=gha,scope=tradingbot-backend
+            type=gha,scope=tradingbot-backend-main
           cache-to: type=gha,mode=max,scope=tradingbot-backend
 
 # ── Job 1b: Build & push frontend (parallel with backend) ─────────────────────
   build-frontend:
     name: Build Frontend
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -92,17 +118,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache node modules & build cache
+        id: node-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            ~/.npm
+          key: node-deps-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            node-deps-${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Build frontend assets
         working-directory: frontend
-        # No Firebase env vars — JWT auth is pure JS, no build-time secrets needed
         env:
           VITE_API_URL: /api
-        run: |
-          npm ci --prefer-offline --no-audit --no-fund
-          npm run build
+        run: npm run build
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -113,6 +150,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -123,23 +163,26 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=gha,scope=tradingbot-frontend
+          cache-from: |
+            type=gha,scope=tradingbot-frontend
+            type=gha,scope=tradingbot-frontend-main
           cache-to: type=gha,mode=max,scope=tradingbot-frontend
 
 # ── Job 2: Deploy to AWS ───────────────────────────────────────────────────────
   deploy:
     name: Deploy to AWS EC2
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    if: needs.build-backend.result == 'success' && needs.build-frontend.result == 'success'
-    timeout-minutes: 20
+    needs: [changes, build-backend, build-frontend]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    timeout-minutes: 15
     env:
       BACKEND_IMAGE:  ghcr.io/bharatha1303/tradingbot-backend
       FRONTEND_IMAGE: ghcr.io/bharatha1303/tradingbot-frontend
       GH_TOKEN:   ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
       GH_ACTOR:   bharatha1303
       RUN_DB_MIGRATION: ${{ github.event.inputs.run_db_migration }}
-      # TradingBot secrets (all prefixed TB_ to avoid collision with hive-* secrets)
+      BUILD_BACKEND:  ${{ needs.changes.outputs.backend }}
+      BUILD_FRONTEND: ${{ needs.changes.outputs.frontend }}
       TB_JWT_SECRET_KEY:        ${{ secrets.TB_JWT_SECRET_KEY }}
       TB_BROKER_ENCRYPTION_KEY: ${{ secrets.TB_BROKER_ENCRYPTION_KEY }}
       TB_POSTGRES_PASSWORD:     ${{ secrets.TB_POSTGRES_PASSWORD }}
@@ -211,8 +254,8 @@ jobs:
           username: ${{ secrets.TB_SERVER_USER }}
           key:      ${{ secrets.TB_SERVER_SSH_KEY }}
           port:     22
-          command_timeout: 15m
-          envs: BACKEND_IMAGE,FRONTEND_IMAGE,GH_TOKEN,GH_ACTOR,RUN_DB_MIGRATION,TB_JWT_SECRET_KEY,TB_BROKER_ENCRYPTION_KEY,TB_POSTGRES_PASSWORD,TB_GROQ_API_KEY
+          command_timeout: 10m
+          envs: BACKEND_IMAGE,FRONTEND_IMAGE,GH_TOKEN,GH_ACTOR,RUN_DB_MIGRATION,BUILD_BACKEND,BUILD_FRONTEND,TB_JWT_SECRET_KEY,TB_BROKER_ENCRYPTION_KEY,TB_POSTGRES_PASSWORD,TB_GROQ_API_KEY
           script: |
             set -eo pipefail
             DEPLOY_DIR="/opt/tradingbot"
@@ -241,81 +284,74 @@ jobs:
               "TB_GROQ_API_KEY=${TB_GROQ_API_KEY}" > "${DEPLOY_DIR}/.env"
             chmod 600 "${DEPLOY_DIR}/.env"
 
-            echo "=== Freeing disk space before pulling new images ==="
-            sudo rm -f /swapfile 2>/dev/null || true
+            # Disk hygiene: prune ONLY stopped containers and dangling images (preserve base layers for fast cache!)
             docker container prune -f 2>/dev/null || true
-            docker image prune -af 2>/dev/null || true
-            docker builder prune -af 2>/dev/null || true
+            docker image prune -f 2>/dev/null || true
             sudo journalctl --vacuum-time=1d 2>/dev/null || true
-            sudo dnf clean all 2>/dev/null || sudo yum clean all 2>/dev/null || true
-            df -h /
+
+            # If disk usage > 85%, run targeted prune on images older than 48h
+            DISK_PCT=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
+            if [ "${DISK_PCT}" -gt 85 ]; then
+              echo "Disk usage high (${DISK_PCT}%) — cleaning older unused images"
+              docker image prune -af --filter "until=48h" 2>/dev/null || true
+            fi
 
             echo "=== Logging in to GHCR ==="
             retry 4 8 bash -c 'echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin'
 
-            echo "=== Pulling pre-built images (only changed layers transferred) ==="
-            retry 4 10 docker pull "${BACKEND_IMAGE}:latest"
-            retry 4 10 docker pull "${FRONTEND_IMAGE}:latest"
+            echo "=== Pulling updated images (layer cache preserved) ==="
+            if [ "${BUILD_BACKEND}" = "true" ] || [ ! "$(docker images -q tradingbot-backend:latest 2>/dev/null)" ]; then
+              echo "Pulling backend image..."
+              retry 4 10 docker pull "${BACKEND_IMAGE}:latest"
+              docker tag "${BACKEND_IMAGE}:latest" tradingbot-backend:latest
+            else
+              echo "Backend unchanged — reusing current image."
+            fi
 
-            # Retag to local names expected by docker-compose.tradingbot.yml
-            docker tag "${BACKEND_IMAGE}:latest" tradingbot-backend:latest
-            docker tag "${FRONTEND_IMAGE}:latest" tradingbot-frontend:latest
+            if [ "${BUILD_FRONTEND}" = "true" ] || [ ! "$(docker images -q tradingbot-frontend:latest 2>/dev/null)" ]; then
+              echo "Pulling frontend image..."
+              retry 4 10 docker pull "${FRONTEND_IMAGE}:latest"
+              docker tag "${FRONTEND_IMAGE}:latest" tradingbot-frontend:latest
+            else
+              echo "Frontend unchanged — reusing current image."
+            fi
 
-            echo "=== Verifying uploaded files ==="
-            ls -la docker-compose.tradingbot.yml deploy/nginx/tradingbot.conf || true
-
-            echo "=== Starting DB & Redis first to synchronize credentials ==="
+            echo "=== Starting DB & Redis if needed ==="
             docker compose -p tradingbot \
               -f docker-compose.tradingbot.yml \
               --env-file .env \
               up -d tradingbot-pg tradingbot-redis
 
-            # Wait for Postgres to accept connections and sync password
-            echo "=== Syncing DB password ==="
-            for pgi in $(seq 1 20); do
+            # Fast sync of DB password
+            for pgi in $(seq 1 10); do
               if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg pg_isready -U tradingbot 2>/dev/null; then
                 docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
                   psql -U tradingbot -d tradingbot -c "ALTER USER tradingbot WITH PASSWORD '${TB_POSTGRES_PASSWORD}';" 2>/dev/null || true
-                echo "DB password confirmed synchronized!"
                 break
               fi
-              sleep 2
+              sleep 1
             done
 
-            echo "=== Updating FULL tradingbot stack (hive-* stacks untouched) ==="
-            # SAFETY: scoped strictly to project 'tradingbot'.
+            echo "=== Updating TradingBot stack (hive-* stacks untouched) ==="
             docker compose -p tradingbot \
               -f docker-compose.tradingbot.yml \
               --env-file .env \
               up -d --no-build
 
-            echo "=== Waiting for backend health (max 120s) ==="
+            echo "=== Fast health check probe ==="
             HEALTHY=0
-            for i in $(seq 1 40); do
+            for i in $(seq 1 30); do
               HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8003/api/health 2>/dev/null || echo "000")
               if [ "${HTTP_CODE}" = "200" ]; then
-                echo "Backend healthy! Responded HTTP 200 after $((i * 3))s!"
+                echo "Backend healthy! Responded HTTP 200 in ~ $((i * 2))s!"
                 HEALTHY=1; break
               fi
-
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
-              STATE=$(docker inspect --format='{{.State.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
-              echo "  waiting... ($((i * 3))s, http=${HTTP_CODE}, status=${STATUS}, state=${STATE})"
-
-              if [ $((i % 5)) -eq 0 ]; then
-                echo "--- Recent backend logs ---"
-                docker logs tradingbot-backend --tail 15 2>&1 || true
-                echo "---------------------------"
-              fi
-
-              sleep 3
+              sleep 2
             done
 
             if [ "${HEALTHY}" -eq 0 ]; then
-              echo "ERROR: Backend did not become healthy in 120s. Full backend logs:"
-              docker logs tradingbot-backend --tail 100 2>&1
-              echo "PostgreSQL logs:"
-              docker logs tradingbot-pg --tail 50 2>&1
+              echo "ERROR: Backend health check failed. Recent logs:"
+              docker logs tradingbot-backend --tail 50 2>&1
               exit 1
             fi
 
@@ -327,7 +363,6 @@ jobs:
                 exit 1
               fi
               FORCE_YES=1 bash scripts/db_migrate.sh
-              echo "=== Restarting backend to pick up fresh data ==="
               docker restart tradingbot-backend >/dev/null 2>&1 || true
             fi
 
@@ -337,17 +372,11 @@ jobs:
             if sudo nginx -t 2>&1; then
               sudo systemctl reload nginx
               echo "Nginx reloaded!"
-            else
-              echo "WARNING: Nginx config test failed — skipping reload"
             fi
 
             echo ""
-            echo "=== Final status ==="
-            docker compose -p tradingbot -f docker-compose.tradingbot.yml ps
-            docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
+            echo "=== Deployment complete! ==="
+            docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}" | grep -E "tradingbot|hive"
 
-            # Clean up dangling images in background
-            docker image prune -f &>/dev/null &
-
-            echo "Deploy complete! http://3.7.55.85"
-
+            # Background cleanup of old dangling layers
+            docker image prune -f >/dev/null 2>&1 &
