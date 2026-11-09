@@ -33,7 +33,11 @@ services:
     environment:
       - APP_NAME=TradingBot
       - DEBUG=false
-      - DATABASE_URL=postgresql+asyncpg://${TB_POSTGRES_USER:-tradingbot}:${TB_POSTGRES_PASSWORD:-tradingbot_secret}@tradingbot-pg:5432/${TB_POSTGRES_DB:-tradingbot}
+      - POSTGRES_HOST=tradingbot-pg
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${TB_POSTGRES_USER:-tradingbot}
+      - POSTGRES_PASSWORD=${TB_POSTGRES_PASSWORD:-tradingbot_secret}
+      - POSTGRES_DB=${TB_POSTGRES_DB:-tradingbot}
       - REDIS_URL=redis://tradingbot-redis:6379/0
       - CORS_ORIGINS=["http://3.7.55.85","http://3.7.55.85:3003","http://localhost:3003"]
       - CORS_ORIGIN_REGEX=https?://(localhost|127\.0\.0\.1):\d+

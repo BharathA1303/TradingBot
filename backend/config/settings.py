@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql+asyncpg://tradingbot:tradingbot@localhost:5432/tradingbot"
     )
+    POSTGRES_HOST: Optional[str] = None
+    POSTGRES_PORT: Optional[int] = 5432
+    POSTGRES_USER: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
+    POSTGRES_DB: Optional[str] = None
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_RECYCLE: int = 3600
