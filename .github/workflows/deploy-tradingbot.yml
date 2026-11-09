@@ -232,14 +232,13 @@ jobs:
             cd "${DEPLOY_DIR}"
 
             # Write .env from secrets (never committed to repo)
-            cat > "${DEPLOY_DIR}/.env" <<ENVEOF
-TB_JWT_SECRET_KEY=${TB_JWT_SECRET_KEY}
-TB_BROKER_ENCRYPTION_KEY=${TB_BROKER_ENCRYPTION_KEY}
-TB_POSTGRES_PASSWORD=${TB_POSTGRES_PASSWORD}
-TB_POSTGRES_USER=tradingbot
-TB_POSTGRES_DB=tradingbot
-TB_GROQ_API_KEY=${TB_GROQ_API_KEY}
-ENVEOF
+            printf "%s\n" \
+              "TB_JWT_SECRET_KEY=${TB_JWT_SECRET_KEY}" \
+              "TB_BROKER_ENCRYPTION_KEY=${TB_BROKER_ENCRYPTION_KEY}" \
+              "TB_POSTGRES_PASSWORD=${TB_POSTGRES_PASSWORD}" \
+              "TB_POSTGRES_USER=tradingbot" \
+              "TB_POSTGRES_DB=tradingbot" \
+              "TB_GROQ_API_KEY=${TB_GROQ_API_KEY}" > "${DEPLOY_DIR}/.env"
             chmod 600 "${DEPLOY_DIR}/.env"
 
             echo "=== Logging in to GHCR ==="
