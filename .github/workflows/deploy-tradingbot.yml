@@ -24,8 +24,9 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/tradingbot-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/tradingbot-frontend
+  # Docker image repository names must be strictly lowercase
+  BACKEND_IMAGE: ghcr.io/bharatha1303/tradingbot-backend
+  FRONTEND_IMAGE: ghcr.io/bharatha1303/tradingbot-frontend
 
 # ── Job 0: Detect changes ─────────────────────────────────────────────────────
 jobs:
@@ -141,10 +142,10 @@ jobs:
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
     timeout-minutes: 20
     env:
-      BACKEND_IMAGE:  ${{ format('ghcr.io/{0}/tradingbot-backend', github.repository_owner) }}
-      FRONTEND_IMAGE: ${{ format('ghcr.io/{0}/tradingbot-frontend', github.repository_owner) }}
+      BACKEND_IMAGE:  ghcr.io/bharatha1303/tradingbot-backend
+      FRONTEND_IMAGE: ghcr.io/bharatha1303/tradingbot-frontend
       GH_TOKEN:   ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
-      GH_ACTOR:   ${{ github.repository_owner }}
+      GH_ACTOR:   bharatha1303
       RUN_DB_MIGRATION: ${{ github.event.inputs.run_db_migration }}
       # TradingBot secrets (all prefixed TB_ to avoid collision with hive-* secrets)
       TB_JWT_SECRET_KEY:        ${{ secrets.TB_JWT_SECRET_KEY }}
