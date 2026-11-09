@@ -40,7 +40,6 @@ from dependencies.admin import (
     is_main_root_admin,
 )
 from core.event_bus import event_bus, Event, EventType
-from firebase_admin import auth as firebase_auth
 
 logger = logging.getLogger(__name__)
 
@@ -959,17 +958,6 @@ async def force_logout_user(
 
     firebase_revoked = False
     firebase_error = None
-    if user.firebase_uid:
-        try:
-            firebase_auth.revoke_refresh_tokens(user.firebase_uid)
-            firebase_revoked = True
-        except Exception as e:
-            firebase_error = str(e)
-            logger.warning(
-                "Failed to revoke Firebase tokens for user_id=%s: %s",
-                user.id,
-                e,
-            )
 
     await _write_audit(
         db,
