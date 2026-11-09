@@ -37,7 +37,28 @@ else:
         }
     )
 
-engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+import urllib.parse
+
+def _safe_database_url(url_str: str) -> str:
+    """Safely handle passwords that contain unescaped '@' or other special chars."""
+    if not url_str or url_str.startswith("sqlite"):
+        return url_str
+    try:
+        prefix, sep, rest = url_str.partition("://")
+        if sep and rest.count("@") > 1:
+            last_at_idx = rest.rfind("@")
+            user_pass = rest[:last_at_idx]
+            host_db = rest[last_at_idx + 1:]
+            if ":" in user_pass:
+                user, password = user_pass.split(":", 1)
+                safe_pass = urllib.parse.quote_plus(password)
+                return f"{prefix}://{user}:{safe_pass}@{host_db}"
+        return url_str
+    except Exception:
+        return url_str
+
+database_url = _safe_database_url(settings.DATABASE_URL)
+engine = create_async_engine(database_url, **engine_kwargs)
 
 if settings.DATABASE_URL.startswith("sqlite"):
     # Enable WAL mode so readers never block writers and vice-versa.
