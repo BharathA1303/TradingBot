@@ -1,6 +1,7 @@
 // Navbar.jsx
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../stores/useAuthStore';
 import { useTheme } from '../../context/ThemeContext';
 import { useMarketStore } from '../../store/useMarketStore';
 import { usePortfolioStore } from '../../store/usePortfolioStore';
@@ -156,6 +157,28 @@ export default function Navbar({ onMenuToggle }) {
         () => new Set(watchlistItems.map((i) => i.symbol)),
         [watchlistItems]
     );
+
+    const user = useAuthStore((s) => s.user);
+    const firstName = user?.full_name?.split(' ')[0] || user?.username || 'Trader';
+
+    const dateStr = useMemo(() => {
+        try {
+            return new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+            }).toUpperCase();
+        } catch {
+            return '';
+        }
+    }, []);
+
+    const greeting = useMemo(() => {
+        const hr = new Date().getHours();
+        if (hr < 12) return 'Good morning';
+        if (hr < 17) return 'Good afternoon';
+        return 'Good evening';
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -412,24 +435,33 @@ export default function Navbar({ onMenuToggle }) {
     return (
         <header
             className={cn(
-                'h-14 bg-surface-900/80 backdrop-blur-xl border-b border-edge/5',
-                'flex items-center justify-between px-4 lg:px-6',
-                'sticky top-0 z-30'
+                'w-full pt-3.5 pb-2 px-4 lg:px-6',
+                'flex items-center justify-between gap-3',
+                'bg-transparent border-0 z-30 transition-all duration-200'
             )}
         >
-
-            {/* Left: hamburger (mobile) + search */}
+            {/* Left: Mobile menu toggle + Date & Greeting + Search */}
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <button
                     type="button"
                     onClick={onMenuToggle}
-                    className="lg:hidden flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-heading hover:bg-overlay/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    className="neu-pill lg:hidden flex-shrink-0 w-10 h-10 rounded-full text-gray-500 hover:text-heading flex items-center justify-center transition-all"
                     aria-label="Open navigation menu"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
-                <div className="relative hidden sm:block flex-1 min-w-0 max-w-[340px]" ref={searchRef}>
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+
+                <div className="hidden md:flex flex-col min-w-0 mr-2 select-none">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {dateStr}
+                    </span>
+                    <h2 className="text-base lg:text-lg font-bold text-heading font-display tracking-tight leading-tight truncate">
+                        {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400">{firstName}</span>
+                    </h2>
+                </div>
+
+                <div className="relative flex-1 min-w-0 max-w-[280px] lg:max-w-[320px]" ref={searchRef}>
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -449,16 +481,16 @@ export default function Navbar({ onMenuToggle }) {
                         placeholder="Search stocks… (e.g. RELIANCE, TCS)"
                         aria-label="Stock search"
                         className={cn(
-                            'w-[300px] lg:w-[340px] bg-surface-800/60 border border-edge/5 rounded-lg',
-                            'pl-10 pr-10 py-2 text-sm text-heading placeholder-gray-500',
-                            'focus:outline-none focus:border-primary-500/30 transition-all duration-200'
+                            'w-full neu-input rounded-full',
+                            'pl-9 pr-9 py-2 text-xs text-heading placeholder-gray-400',
+                            'focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200'
                         )}
                     />
 
                     {/* ── Autocomplete dropdown ── */}
                     {showResults && (
                         <div
-                            className="absolute top-full left-0 mt-1 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-xl z-50 max-h-[320px] overflow-y-auto animate-slide-in"
+                            className="absolute top-full left-0 mt-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 max-h-[320px] overflow-y-auto animate-slide-in"
                             style={{ minWidth: '100%', width: 'max-content' }}
                         >
                             {showingRecommendations && (
@@ -518,21 +550,21 @@ export default function Navbar({ onMenuToggle }) {
                 </div>
             </div>
 
-            {/* Right: market status, WS status, theme, bell */}
-            <div className="flex items-center gap-1.5">
-                {/* Total P&L (same logic as Portfolio page) */}
+            {/* Right: Floating Neumorphic Pills */}
+            <div className="flex items-center gap-2 select-none">
+                {/* Total P&L */}
                 <div
-                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800/40 mr-1"
+                    className="hidden xl:flex neu-pill items-center gap-2 px-3.5 py-1.5 rounded-full"
                     title="Total P&L from portfolio summary + live quote pricing"
                 >
-                    <BadgeIndianRupee className={cn('w-3.5 h-3.5', hasPortfolioData ? pnlColorClass(totalPnl) : 'text-gray-500')} />
-                    <div className="flex items-center gap-1.5 text-xs font-medium tabular-nums">
-                        <span className="text-gray-400">Total P&L</span>
-                        <span className={cn(hasPortfolioData ? pnlColorClass(totalPnl) : 'text-gray-500')}>
-                            {hasPortfolioData ? `${totalPnl >= 0 ? '+' : ''}${formatCurrency(totalPnl)}` : '—'}
+                    <BadgeIndianRupee className={cn('w-3.5 h-3.5', hasPortfolioData ? pnlColorClass(totalPnl) : 'text-gray-400')} />
+                    <div className="flex items-center gap-1.5 text-xs font-semibold tabular-nums">
+                        <span className="text-gray-400 font-normal">P&L:</span>
+                        <span className={cn(hasPortfolioData ? pnlColorClass(totalPnl) : 'text-gray-400')}>
+                            {hasPortfolioData ? `${totalPnl >= 0 ? '+' : ''}${formatCurrency(totalPnl)}` : '₹0.00'}
                         </span>
                         {hasPortfolioData && (
-                            <span className={cn('hidden xl:inline', pnlColorClass(totalPnl))}>
+                            <span className={cn('text-[11px]', pnlColorClass(totalPnl))}>
                                 ({formatPercent(totalPnlPct)})
                             </span>
                         )}
@@ -543,60 +575,42 @@ export default function Navbar({ onMenuToggle }) {
                 <div
                     onClick={() => navigate('/brokers')}
                     className={cn(
-                        "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800/40 hover:bg-surface-800/80 cursor-pointer border border-edge/5 transition-all select-none mr-1",
-                        connectedInfo?.status === 'expired' && "border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10"
+                        "hidden sm:flex neu-pill items-center gap-2 px-3.5 py-1.5 rounded-full cursor-pointer transition-all select-none",
+                        connectedInfo?.status === 'expired' && "border-amber-500/30 bg-amber-500/10"
                     )}
-                    title={connectedBroker ? `${connectedMeta?.name}: ${connectedInfo?.status === 'connected' ? 'Active' : 'Session Expired'}. Click to manage.` : "No broker connected. Click to connect."}
+                    title={connectedBroker ? `${connectedMeta?.name}: Active` : "No broker connected"}
                 >
                     <div className={cn(
                         "w-2 h-2 rounded-full",
                         connectedInfo?.status === 'connected' ? "bg-emerald-400 animate-pulse" : connectedInfo?.status === 'expired' ? "bg-amber-400" : "bg-red-400"
                     )} />
-                    <span className="text-xs font-medium text-heading">
+                    <span className="text-xs font-semibold text-heading">
                         {connectedBroker ? connectedMeta?.name : "No Broker"}
                     </span>
-                    {connectedInfo?.status === 'expired' && (
-                        <span className="text-[9px] bg-amber-500/20 text-amber-500 px-1 py-0.5 rounded font-semibold uppercase tracking-wider scale-90">
-                            Expired
-                        </span>
-                    )}
                 </div>
 
-                {/* Market status */}
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800/40 mr-1">
+                {/* Market Status */}
+                <div className="hidden lg:flex neu-pill items-center gap-2 px-3 py-1.5 rounded-full">
                     <div className={cn('w-2 h-2 rounded-full', statusColor, marketOpen && 'animate-pulse')} />
-                    <span className="text-xs text-gray-400 font-medium">{statusText}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{statusText}</span>
                 </div>
 
-                {/* WebSocket status */}
-                <div
-                    className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-800/40 mr-1"
-                    title={`Transport: ${wsStatus}${hasFreshQuotes && wsStatus !== 'connected' ? ' • Data: active (fallback)' : ''}`}
-                >
-                    <div className={cn('w-1.5 h-1.5 rounded-full', wsColor)} />
-                    <span className="text-xs text-gray-500">{wsLabel}</span>
-                </div>
-
-                {/* Theme toggle */}
+                {/* Theme Toggle */}
                 <button
                     onClick={toggleTheme}
-                    className="relative p-2 rounded-lg text-gray-400 hover:text-heading hover:bg-overlay/5 transition-all duration-300 group"
+                    className="neu-pill w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-heading transition-all group relative"
                     aria-label="Toggle theme"
                 >
                     <Sun
                         className={cn(
-                            'w-5 h-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ease-in-out',
-                            theme === 'dark'
-                                ? 'opacity-100 rotate-0 scale-100'
-                                : 'opacity-0 rotate-90 scale-0'
+                            'w-4 h-4 absolute transition-all duration-500 ease-in-out',
+                            theme === 'dark' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-0'
                         )}
                     />
                     <Moon
                         className={cn(
-                            'w-5 h-5 transition-all duration-500 ease-in-out',
-                            theme === 'dark'
-                                ? 'opacity-0 -rotate-90 scale-0'
-                                : 'opacity-100 rotate-0 scale-100'
+                            'w-4 h-4 transition-all duration-500 ease-in-out',
+                            theme === 'dark' ? 'opacity-0 -rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
                         )}
                     />
                 </button>
@@ -606,16 +620,14 @@ export default function Navbar({ onMenuToggle }) {
                     <button
                         onClick={toggleNotifications}
                         className={cn(
-                            'p-2 rounded-lg transition-all relative',
-                            showNotifications
-                                ? 'text-primary-600 bg-primary-500/10'
-                                : 'text-gray-400 hover:text-heading hover:bg-overlay/5'
+                            'neu-pill w-9 h-9 rounded-full flex items-center justify-center transition-all relative',
+                            showNotifications ? 'text-primary-600 shadow-inner' : 'text-gray-500 hover:text-heading'
                         )}
                         aria-label="Notifications"
                     >
-                        <Bell className={cn('w-5 h-5 transition-transform', unreadCount > 0 && 'animate-[bell-ring_0.5s_ease-in-out]')} />
+                        <Bell className={cn('w-4 h-4', unreadCount > 0 && 'animate-[bell-ring_0.5s_ease-in-out]')} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-[10px] font-semibold text-white flex items-center justify-center leading-none">
+                            <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-emerald-500 text-[9px] font-bold text-white flex items-center justify-center leading-none">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -628,6 +640,36 @@ export default function Navbar({ onMenuToggle }) {
                         />
                     )}
                 </div>
+
+                {/* User Profile Pill (Reference website style) */}
+                {user && (
+                    <div
+                        onClick={() => navigate('/settings?tab=profile')}
+                        className="hidden sm:flex neu-pill items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full cursor-pointer hover:scale-102 transition-all ml-1"
+                        title="Open account profile"
+                    >
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white font-bold text-[11px] flex items-center justify-center overflow-hidden ring-1 ring-white/60">
+                            {user.avatar_url ? (
+                                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                (user.full_name?.slice(0, 2) || user.username?.slice(0, 2) || 'TB').toUpperCase()
+                            )}
+                        </div>
+                        <div className="flex flex-col text-left leading-tight">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-heading truncate max-w-[110px]">
+                                    {user.full_name || user.username}
+                                </span>
+                                <span className="text-[9px] font-extrabold uppercase px-1 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 leading-tight">
+                                    {user.role === 'admin' ? 'ADMIN' : 'PRO'}
+                                </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+                                {user.email}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
         </header>
     );

@@ -174,8 +174,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes, build-backend, build-frontend]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
-    timeout-minutes: 15
+    timeout-minutes: 8
     env:
+      SERVER_HOST: ${{ secrets.TB_SERVER_HOST }}
+      SERVER_USER: ${{ secrets.TB_SERVER_USER }}
       BACKEND_IMAGE:  ghcr.io/bharatha1303/tradingbot-backend
       FRONTEND_IMAGE: ghcr.io/bharatha1303/tradingbot-frontend
       GH_TOKEN:   ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
@@ -191,192 +193,128 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── Start SSH agent (used for scp uploads) ─────────────────────────────
+      # ── Start SSH agent with private key ───────────────────────────────────
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.TB_SERVER_SSH_KEY }}
 
-      # ── Upload config files to server ──────────────────────────────────────
-      - name: Upload deploy assets to server
-        env:
-          SERVER_HOST: ${{ secrets.TB_SERVER_HOST }}
-          SERVER_USER: ${{ secrets.TB_SERVER_USER }}
+      # ── Fast native deploy via runner OpenSSH (no docker-in-docker overhead) ──
+      - name: Deploy to AWS EC2
         run: |
           set -euo pipefail
-
-          retry() {
-            local attempts="$1" delay="$2"; shift 2
-            local n=1
-            until "$@"; do
-              [ "$n" -ge "$attempts" ] && { echo "ERROR: failed after $attempts attempts: $*"; return 1; }
-              echo "Attempt $n/$attempts failed — retrying in ${delay}s..."
-              sleep "$delay"; n=$((n+1))
-            done
-          }
 
           SSH_OPTS=(
             -o StrictHostKeyChecking=accept-new
             -o UserKnownHostsFile=$HOME/.ssh/known_hosts
             -o ServerAliveInterval=15
-            -o ServerAliveCountMax=6
-            -o ConnectTimeout=20
-            -P 22
+            -o ServerAliveCountMax=4
+            -o ConnectTimeout=15
+            -p 22
           )
 
-          retry 4 5 ssh "${SSH_OPTS[@]}" "${SERVER_USER}@${SERVER_HOST}" \
+          echo "=== Generating environment configuration ==="
+          printf "TB_POSTGRES_USER=tradingbot\nTB_POSTGRES_DB=tradingbot\n" > .env.deploy
+          printf "TB_JWT_SECRET_KEY=%s\n" "${TB_JWT_SECRET_KEY}" >> .env.deploy
+          printf "TB_BROKER_ENCRYPTION_KEY=%s\n" "${TB_BROKER_ENCRYPTION_KEY}" >> .env.deploy
+          printf "TB_POSTGRES_PASSWORD=%s\n" "${TB_POSTGRES_PASSWORD}" >> .env.deploy
+          printf "TB_GROQ_API_KEY=%s\n" "${TB_GROQ_API_KEY}" >> .env.deploy
+
+          echo "=== Uploading configuration files to server ==="
+          ssh "${SSH_OPTS[@]}" "${SERVER_USER}@${SERVER_HOST}" \
             "sudo mkdir -p /opt/tradingbot/deploy/nginx && sudo chown -R ${SERVER_USER}:${SERVER_USER} /opt/tradingbot"
 
-          retry 4 5 scp "${SSH_OPTS[@]}" \
+          scp "${SSH_OPTS[@]}" \
+            .env.deploy \
+            "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/.env"
+          rm -f .env.deploy
+
+          ssh "${SSH_OPTS[@]}" "${SERVER_USER}@${SERVER_HOST}" "chmod 600 /opt/tradingbot/.env"
+
+          scp "${SSH_OPTS[@]}" \
             docker-compose.tradingbot.yml \
             "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/docker-compose.tradingbot.yml"
 
-          retry 4 5 scp "${SSH_OPTS[@]}" \
+          scp "${SSH_OPTS[@]}" \
             deploy/nginx/tradingbot.conf \
             "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/deploy/nginx/tradingbot.conf"
 
-          # Upload DB migration assets only when explicitly triggered
           if [ "${RUN_DB_MIGRATION}" = "true" ]; then
             echo "run_db_migration=true — uploading dump + migration script"
-            retry 4 5 scp "${SSH_OPTS[@]}" scripts/db_migrate.sh \
+            scp "${SSH_OPTS[@]}" scripts/db_migrate.sh \
               "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/scripts/db_migrate.sh"
-            retry 4 5 scp "${SSH_OPTS[@]}" alphasync_demo.sql \
+            scp "${SSH_OPTS[@]}" alphasync_demo.sql \
               "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/tradingbot.sql"
-          else
-            echo "run_db_migration not set — skipping DB dump (data untouched)"
           fi
 
-      # ── Deploy on server ───────────────────────────────────────────────────
-      - name: Deploy on AWS EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host:     ${{ secrets.TB_SERVER_HOST }}
-          username: ${{ secrets.TB_SERVER_USER }}
-          key:      ${{ secrets.TB_SERVER_SSH_KEY }}
-          port:     22
-          command_timeout: 10m
-          envs: BACKEND_IMAGE,FRONTEND_IMAGE,GH_TOKEN,GH_ACTOR,RUN_DB_MIGRATION,BUILD_BACKEND,BUILD_FRONTEND,TB_JWT_SECRET_KEY,TB_BROKER_ENCRYPTION_KEY,TB_POSTGRES_PASSWORD,TB_GROQ_API_KEY
-          script: |
-            set -eo pipefail
-            DEPLOY_DIR="/opt/tradingbot"
+          echo "=== Executing remote deployment script ==="
+          ssh "${SSH_OPTS[@]}" "${SERVER_USER}@${SERVER_HOST}" \
+            "BACKEND_IMAGE='${BACKEND_IMAGE}' FRONTEND_IMAGE='${FRONTEND_IMAGE}' GH_TOKEN='${GH_TOKEN}' GH_ACTOR='${GH_ACTOR}' RUN_DB_MIGRATION='${RUN_DB_MIGRATION}' bash -se" << 'REMOTEEOD'
+              set -eo pipefail
+              DEPLOY_DIR="/opt/tradingbot"
 
-            retry() {
-              local attempts="$1" delay="$2"; shift 2
-              local n=1
-              until "$@"; do
-                [ "$n" -ge "$attempts" ] && { echo "ERROR: failed after $attempts attempts: $*"; return 1; }
-                echo "Attempt $n/$attempts failed — retrying in ${delay}s..."
-                sleep "$delay"; n=$((n+1))
-              done
-            }
+              retry() {
+                local attempts="$1" delay="$2"; shift 2
+                local n=1
+                until "$@"; do
+                  [ "$n" -ge "$attempts" ] && { echo "ERROR: failed after $attempts attempts: $*"; return 1; }
+                  echo "Attempt $n/$attempts failed — retrying in ${delay}s..."
+                  sleep "$delay"; n=$((n+1))
+                done
+              }
 
-            echo "=== Preparing deploy directory ==="
-            mkdir -p "${DEPLOY_DIR}"
-            cd "${DEPLOY_DIR}"
+              cd "${DEPLOY_DIR}"
 
-            # Write .env from secrets (never committed to repo)
-            printf "%s\n" \
-              "TB_JWT_SECRET_KEY=${TB_JWT_SECRET_KEY}" \
-              "TB_BROKER_ENCRYPTION_KEY=${TB_BROKER_ENCRYPTION_KEY}" \
-              "TB_POSTGRES_PASSWORD=${TB_POSTGRES_PASSWORD}" \
-              "TB_POSTGRES_USER=tradingbot" \
-              "TB_POSTGRES_DB=tradingbot" \
-              "TB_GROQ_API_KEY=${TB_GROQ_API_KEY}" > "${DEPLOY_DIR}/.env"
-            chmod 600 "${DEPLOY_DIR}/.env"
+              echo "=== Logging in to GHCR ==="
+              retry 3 5 bash -c 'echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin'
 
-            # Disk hygiene: prune ONLY stopped containers and dangling images (preserve base layers for fast cache!)
-            docker container prune -f 2>/dev/null || true
-            docker image prune -f 2>/dev/null || true
-            sudo journalctl --vacuum-time=1d 2>/dev/null || true
-
-            # If disk usage > 85%, run targeted prune on images older than 48h
-            DISK_PCT=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
-            if [ "${DISK_PCT}" -gt 85 ]; then
-              echo "Disk usage high (${DISK_PCT}%) — cleaning older unused images"
-              docker image prune -af --filter "until=48h" 2>/dev/null || true
-            fi
-
-            echo "=== Logging in to GHCR ==="
-            retry 4 8 bash -c 'echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin'
-
-            echo "=== Pulling updated images (layer cache preserved) ==="
-            if [ "${BUILD_BACKEND}" = "true" ] || [ ! "$(docker images -q tradingbot-backend:latest 2>/dev/null)" ]; then
-              echo "Pulling backend image..."
-              retry 4 10 docker pull "${BACKEND_IMAGE}:latest"
+              echo "=== Pulling images ==="
+              retry 3 5 docker pull "${BACKEND_IMAGE}:latest"
               docker tag "${BACKEND_IMAGE}:latest" tradingbot-backend:latest
-            else
-              echo "Backend unchanged — reusing current image."
-            fi
-
-            if [ "${BUILD_FRONTEND}" = "true" ] || [ ! "$(docker images -q tradingbot-frontend:latest 2>/dev/null)" ]; then
-              echo "Pulling frontend image..."
-              retry 4 10 docker pull "${FRONTEND_IMAGE}:latest"
+              retry 3 5 docker pull "${FRONTEND_IMAGE}:latest"
               docker tag "${FRONTEND_IMAGE}:latest" tradingbot-frontend:latest
-            else
-              echo "Frontend unchanged — reusing current image."
-            fi
 
-            echo "=== Starting DB & Redis if needed ==="
-            docker compose -p tradingbot \
-              -f docker-compose.tradingbot.yml \
-              --env-file .env \
-              up -d tradingbot-pg tradingbot-redis
+              echo "=== Ensuring TradingBot stack is running ==="
+              docker compose -p tradingbot \
+                -f docker-compose.tradingbot.yml \
+                --env-file .env \
+                up -d --no-build
 
-            # Fast sync of DB password
-            for pgi in $(seq 1 10); do
-              if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg pg_isready -U tradingbot 2>/dev/null; then
-                docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
-                  psql -U tradingbot -d tradingbot -c "ALTER USER tradingbot WITH PASSWORD '${TB_POSTGRES_PASSWORD}';" 2>/dev/null || true
-                break
-              fi
-              sleep 1
-            done
+              echo "=== Fast health check probe ==="
+              HEALTHY=0
+              for i in $(seq 1 20); do
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8003/api/health 2>/dev/null || echo "000")
+                if [ "${HTTP_CODE}" = "200" ]; then
+                  echo "Backend healthy! Responded HTTP 200 in ~ $((i * 2))s!"
+                  HEALTHY=1; break
+                fi
+                sleep 2
+              done
 
-            echo "=== Updating TradingBot stack (hive-* stacks untouched) ==="
-            docker compose -p tradingbot \
-              -f docker-compose.tradingbot.yml \
-              --env-file .env \
-              up -d --no-build
-
-            echo "=== Fast health check probe ==="
-            HEALTHY=0
-            for i in $(seq 1 30); do
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8003/api/health 2>/dev/null || echo "000")
-              if [ "${HTTP_CODE}" = "200" ]; then
-                echo "Backend healthy! Responded HTTP 200 in ~ $((i * 2))s!"
-                HEALTHY=1; break
-              fi
-              sleep 2
-            done
-
-            if [ "${HEALTHY}" -eq 0 ]; then
-              echo "ERROR: Backend health check failed. Recent logs:"
-              docker logs tradingbot-backend --tail 50 2>&1
-              exit 1
-            fi
-
-            # ── Optional DB migration ───────────────────────────────────────
-            if [ "${RUN_DB_MIGRATION}" = "true" ]; then
-              echo "=== Running DB migration ==="
-              if [ ! -f scripts/db_migrate.sh ] || [ ! -f tradingbot.sql ]; then
-                echo "ERROR: migration assets missing on server."
+              if [ "${HEALTHY}" -eq 0 ]; then
+                echo "ERROR: Backend health check failed. Recent logs:"
+                docker logs tradingbot-backend --tail 50 2>&1
                 exit 1
               fi
-              FORCE_YES=1 bash scripts/db_migrate.sh
-              docker restart tradingbot-backend >/dev/null 2>&1 || true
-            fi
 
-            echo "=== Installing Nginx config ==="
-            sudo cp deploy/nginx/tradingbot.conf /etc/nginx/conf.d/tradingbot.conf
+              # Optional DB migration
+              if [ "${RUN_DB_MIGRATION}" = "true" ]; then
+                echo "=== Running DB migration ==="
+                if [ ! -f scripts/db_migrate.sh ] || [ ! -f tradingbot.sql ]; then
+                  echo "ERROR: migration assets missing on server."
+                  exit 1
+                fi
+                FORCE_YES=1 bash scripts/db_migrate.sh
+                docker restart tradingbot-backend >/dev/null 2>&1 || true
+              fi
 
-            if sudo nginx -t 2>&1; then
-              sudo systemctl reload nginx
-              echo "Nginx reloaded!"
-            fi
+              echo "=== Installing Nginx config ==="
+              sudo cp deploy/nginx/tradingbot.conf /etc/nginx/conf.d/tradingbot.conf
+              if sudo nginx -t 2>&1; then
+                sudo systemctl reload nginx
+                echo "Nginx reloaded!"
+              fi
 
-            echo ""
-            echo "=== Deployment complete! ==="
-            docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}" | grep -E "tradingbot|hive"
-
-            # Background cleanup of old dangling layers
-            docker image prune -f >/dev/null 2>&1 &
+              echo "=== Deployment complete! ==="
+              docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}" | grep -E "tradingbot|hive"
+          REMOTEEOD

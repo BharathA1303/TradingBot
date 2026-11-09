@@ -102,7 +102,7 @@ export default function AppShell() {
                 <div
                     className={cn(
                         'flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden w-full',
-                        sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[240px]'
+                        'lg:pl-[84px] transition-all duration-300'
                     )}
                 >
                     <Navbar onMenuToggle={toggleSidebar} />
