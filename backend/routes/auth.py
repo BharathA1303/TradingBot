@@ -471,6 +471,10 @@ async def register(req: RegisterRequest, request: Request, db: AsyncSession = De
     except IntegrityError as e:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Email already registered.")
+    except Exception as e:
+        await db.rollback()
+        logger.exception("Failed to create user during registration: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to create user account.")
 
     # Group assignment
     if user.role != "admin" and matched_group:
@@ -481,16 +485,22 @@ async def register(req: RegisterRequest, request: Request, db: AsyncSession = De
 
     # Send registration email for pending users
     if not admin_allowlisted and not effective_auto_approval:
-        send_registration_received_email(user)
+        try:
+            send_registration_received_email(user)
+        except Exception:
+            logger.exception("Failed to send registration email for %s", user.email)
 
-    event_bus.emit_nowait(
-        Event(
-            type=EventType.USER_LOGIN,
-            data={"user_id": str(user.id), "email": user.email, "action": "register", "provider": "password"},
-            user_id=str(user.id),
-            source="auth",
+    try:
+        event_bus.emit_nowait(
+            Event(
+                type=EventType.USER_LOGIN,
+                data={"user_id": str(user.id), "email": user.email, "action": "register", "provider": "password"},
+                user_id=str(user.id),
+                source="auth",
+            )
         )
-    )
+    except Exception:
+        logger.warning("Event bus emit failed during registration for user_id=%s", user.id)
 
     return {
         "token": token,

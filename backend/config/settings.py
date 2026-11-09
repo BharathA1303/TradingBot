@@ -135,7 +135,11 @@ class Settings(BaseSettings):
     ADMIN_SESSION_EXPIRY_MINUTES: int = 30
     TOTP_ISSUER_NAME: str = "TradingBot Admin"
     # Temporary bootstrap admin allowlist. Override in env for production.
-    ADMIN_EMAIL_ALLOWLIST: list[str] = ["meganath1025@gmail.com"]
+    ADMIN_EMAIL_ALLOWLIST: list[str] = [
+        "meganath1025@gmail.com",
+        "ashok.j2346@gmail.com",
+        "bharatha1303@gmail.com",
+    ]
     # Root admin email — has unrestricted access and can create/manage other admins.
     ROOT_ADMIN_EMAIL: str = "meganath1025@gmail.com"
 

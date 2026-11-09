@@ -47,7 +47,7 @@ services:
       - ZEBU_VENDOR_CODE=${ZEBU_VENDOR_CODE:-}
       - ZEBU_REDIRECT_URI=${ZEBU_REDIRECT_URI:-http://3.7.55.85/broker/callback}
       - ALICE_BLUE_REDIRECT_URI=${ALICE_BLUE_REDIRECT_URI:-http://3.7.55.85/broker/callback}
-      - ADMIN_EMAIL_ALLOWLIST=${ADMIN_EMAIL_ALLOWLIST:-["meganath1025@gmail.com"]}
+      - ADMIN_EMAIL_ALLOWLIST=${ADMIN_EMAIL_ALLOWLIST:-["meganath1025@gmail.com","ashok.j2346@gmail.com","bharatha1303@gmail.com"]}
       - ROOT_ADMIN_EMAIL=${ROOT_ADMIN_EMAIL:-meganath1025@gmail.com}
       - GROQ_API_KEY=${TB_GROQ_API_KEY:-}
       - GROK_API_KEY=${TB_GROQ_API_KEY:-}

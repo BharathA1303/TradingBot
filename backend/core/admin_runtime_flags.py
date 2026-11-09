@@ -1,10 +1,12 @@
+import os
 from threading import Lock
 
 
 class _AdminRuntimeFlags:
     def __init__(self) -> None:
         self._lock = Lock()
-        self._auto_approval_enabled = False
+        default_val = os.environ.get("AUTO_APPROVE_USERS", "true").strip().lower() in ("true", "1", "yes")
+        self._auto_approval_enabled = default_val
 
     def is_auto_approval_enabled(self) -> bool:
         with self._lock:
