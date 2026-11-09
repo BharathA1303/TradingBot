@@ -323,11 +323,6 @@ function ManageUserModal({ user: selectedUser, userDetail, detailLoading, action
                             <input className="input-field" value={actionState.reason} placeholder="Optional reason" maxLength={500}
                                 onChange={(e) => setActionState((p) => ({ ...p, reason: e.target.value }))} />
                         </div>
-                        <div>
-                            <label className="label-text">TOTP For Deactivate/Delete</label>
-                            <input className="input-field" value={actionState.totpCode} placeholder="Required to deactivate" inputMode="numeric"
-                                onChange={(e) => setActionState((p) => ({ ...p, totpCode: e.target.value.replace(/\D/g, '').slice(0, 8) }))} />
-                        </div>
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">
                         <button className="admin-action-btn admin-action-btn--primary text-sm" disabled={actionLoading} onClick={() => onAction('approve')}>
@@ -973,15 +968,9 @@ export default function AdminPanelPage() {
 
     const clearAdminSession = useCallback(() => { clearAdminSessionToken(); }, []);
 
-    const resetToVerifyStage = useCallback((message = 'Admin session expired. Please verify 2FA again.') => {
-        clearAdminSession();
-        setAuthStage('verify');
-        setSetupPayload(null);
-        setAuthCode('');
-        setModalUserId(null);
-        setShowAdminModal(false);
+    const resetToVerifyStage = useCallback((message = 'Admin action failed') => {
         if (message) toast.error(message);
-    }, [clearAdminSession]);
+    }, []);
 
     const loadStats = useCallback(async () => {
         const { data } = await adminApi.getDashboardStats();
@@ -1147,23 +1136,14 @@ export default function AdminPanelPage() {
         if (!user || user.role !== 'admin') { setBootstrapping(false); return; }
         setBootstrapping(true);
         try {
-            const existingSession = getAdminSessionToken();
-            if (existingSession) {
-                try {
-                    const { data } = await adminApi.validateSession();
-                    if (data?.admin_level) setAdminLevel(normalizeAdminLevel(data.admin_level));
-                    setAuthStage('dashboard');
-                    await refreshDashboard();
-                    return;
-                } catch { clearAdminSession(); }
-            }
-            const statusRes = await adminApi.getTwoFactorStatus();
-            setAuthStage(statusRes?.data?.has_2fa ? 'verify' : 'setup');
+            setAdminLevel(normalizeAdminLevel(user?.admin_level || 'root'));
+            setAuthStage('dashboard');
+            await refreshDashboard();
         } catch (err) {
-            toast.error(parseApiError(err, 'Failed to initialize admin access'));
-            setAuthStage('verify');
+            toast.error(parseApiError(err, 'Failed to initialize admin dashboard'));
+            setAuthStage('dashboard');
         } finally { setBootstrapping(false); }
-    }, [clearAdminSession, refreshDashboard, user]);
+    }, [refreshDashboard, user]);
 
     useEffect(() => { bootstrapAdmin(); }, [bootstrapAdmin]);
 
@@ -1246,10 +1226,9 @@ export default function AdminPanelPage() {
             else if (actionName === 'reactivate') { await adminApi.reactivateUser(modalUser.id, durationDays); toast.success('User reactivated'); }
             else if (actionName === 'set-duration') { await adminApi.setDuration(modalUser.id, durationDays); toast.success('Duration updated'); }
             else if (actionName === 'deactivate') {
-                if (actionState.totpCode.length < 6) { toast.error('TOTP code required'); setActionLoading(false); return; }
-                await adminApi.deactivateUser(modalUser.id, actionState.reason?.trim() || null, actionState.totpCode);
+                await adminApi.deactivateUser(modalUser.id, actionState.reason?.trim() || null);
                 toast.success('User deactivated');
-                setActionState((p) => ({ ...p, reason: '', totpCode: '' }));
+                setActionState((p) => ({ ...p, reason: '' }));
             }
             else if (actionName === 'force-logout') {
                 await adminApi.forceLogoutUser(modalUser.id);
@@ -1257,7 +1236,6 @@ export default function AdminPanelPage() {
             }
             else if (actionName === 'delete-user') {
                 const email = modalUser?.email || 'this user';
-                if (actionState.totpCode.length < 6) { toast.error('TOTP code required'); setActionLoading(false); return; }
                 if (!window.confirm(`Permanently delete ${email}? This removes the account and all data from DB.`)) {
                     setActionLoading(false);
                     return;
@@ -1266,9 +1244,9 @@ export default function AdminPanelPage() {
                     setActionLoading(false);
                     return;
                 }
-                await adminApi.deleteUserAccount(modalUser.id, actionState.totpCode);
+                await adminApi.deleteUserAccount(modalUser.id);
                 toast.success('User account permanently deleted');
-                setActionState((p) => ({ ...p, reason: '', totpCode: '' }));
+                setActionState((p) => ({ ...p, reason: '' }));
                 closeManageModal();
             }
             await refreshDashboard();
@@ -2022,22 +2000,13 @@ export default function AdminPanelPage() {
                                                                 className="admin-action-btn admin-action-btn--danger text-[11px] sm:text-xs"
                                                                 onClick={async () => {
                                                                     const email = u?.email || 'this user';
-                                                                    const totpCode = (window.prompt('Enter admin TOTP code to permanently delete this user:') || '').replace(/\D/g, '').slice(0, 8);
-                                                                    if (totpCode.length < 6) {
-                                                                        toast.error('Valid TOTP code is required');
-                                                                        return;
-                                                                    }
                                                                     if (!window.confirm(`Permanently delete ${email}? This removes account and all data from DB.`)) return;
                                                                     if (!window.confirm('Final confirmation: this action cannot be undone. Continue?')) return;
                                                                     try {
-                                                                        await adminApi.deleteUserAccount(u.id, totpCode);
+                                                                        await adminApi.deleteUserAccount(u.id);
                                                                         toast.success('User account permanently deleted');
                                                                         await refreshDashboard();
                                                                     } catch (err) {
-                                                                        if ([401, 403].includes(err?.response?.status)) {
-                                                                            resetToVerifyStage('Session expired. Please verify 2FA again.');
-                                                                            return;
-                                                                        }
                                                                         toast.error(parseApiError(err, 'Failed to delete user'));
                                                                     }
                                                                 }}

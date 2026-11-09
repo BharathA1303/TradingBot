@@ -8,8 +8,8 @@ export default function usePageMeta(title, description) {
     useEffect(() => {
         const prev = document.title;
         document.title = title
-            ? `${title} | AlphaSync`
-            : "AlphaSync — India's #1 Paper Trading Platform";
+            ? `${title} | TradingBot`
+            : "TradingBot — India's #1 Paper Trading Platform";
 
         let metaDesc = document.querySelector('meta[name="description"]');
         const prevDesc = metaDesc?.getAttribute('content');

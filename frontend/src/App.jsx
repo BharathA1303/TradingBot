@@ -81,23 +81,19 @@ export default function App() {
                         <Route path="/account-status" element={
                             <ProtectedRoute><AccountStatusPage /></ProtectedRoute>
                         } />
-                        <Route path="/collect-phone" element={
-                            <ProtectedRoute><CollectPhonePage /></ProtectedRoute>
-                        } />
+                        <Route path="/collect-phone" element={<Navigate to="/dashboard" replace />} />
 
                         {/* ── Protected (mode/broker select, no AppShell) ── */}
                         <Route path="/select-mode" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/select-broker" element={
-                            <ProtectedRoute><BrokerSelectPage /></ProtectedRoute>
-                        } />
+                        <Route path="/select-broker" element={<Navigate to="/brokers" replace />} />
                         <Route path="/broker/callback" element={
                             <ProtectedRoute><BrokerCallbackPage /></ProtectedRoute>
                         } />
 
-                        {/* ── Protected (inside AppShell — requires onboarding) ── */}
+                        {/* ── Protected (inside AppShell) ── */}
                         <Route
                             element={
-                                <ProtectedRoute requireOnboarding>
+                                <ProtectedRoute>
                                     <AppShell />
                                 </ProtectedRoute>
                             }

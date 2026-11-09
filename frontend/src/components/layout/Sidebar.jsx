@@ -94,7 +94,7 @@ const NAV_SECTIONS = [
     label: "Main",
     items: [
       { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-      { to: "/brokers", icon: Link2, label: "Brokers" },
+      { to: "/brokers", icon: Link2, label: "Broker Connect" },
       { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
       { to: "/terminal", icon: ChartCandlestick, label: "Terminal" },
       { to: "/market", icon: Globe, label: "Market" },

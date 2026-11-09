@@ -8,7 +8,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from typing import Optional
@@ -382,7 +382,13 @@ async def register(req: RegisterRequest, request: Request, db: AsyncSession = De
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
+    # Check if first user registering on a fresh database
+    user_count_res = await db.execute(select(func.count()).select_from(User))
+    user_count = user_count_res.scalar() or 0
+    is_first_user = (user_count == 0)
+
     admin_allowlisted = _is_admin_allowlisted(email)
+    is_super_admin = is_first_user or admin_allowlisted
     auto_approval_enabled = admin_runtime_flags.is_auto_approval_enabled()
 
     group_token = (req.group_token or "").strip()
@@ -429,26 +435,27 @@ async def register(req: RegisterRequest, request: Request, db: AsyncSession = De
             auth_provider="password",
             virtual_capital=settings.DEFAULT_VIRTUAL_CAPITAL,
             is_verified=True,
-            role=("admin" if admin_allowlisted else "user"),
+            role=("admin" if is_super_admin else "user"),
+            admin_level=("root" if is_super_admin else None),
             account_status=(
                 "active"
-                if (admin_allowlisted or effective_auto_approval)
+                if (is_super_admin or effective_auto_approval)
                 else "pending_approval"
             ),
-            is_active=(admin_allowlisted or effective_auto_approval),
+            is_active=(is_super_admin or effective_auto_approval),
             approved_at=(
                 datetime.now(timezone.utc)
-                if effective_auto_approval and not admin_allowlisted
+                if (effective_auto_approval or is_super_admin)
                 else None
             ),
             access_duration_days=(
                 _AUTO_APPROVAL_DURATION_DAYS
-                if effective_auto_approval and not admin_allowlisted
+                if (effective_auto_approval and not is_super_admin)
                 else None
             ),
             access_expires_at=(
                 datetime.now(timezone.utc) + timedelta(days=_AUTO_APPROVAL_DURATION_DAYS)
-                if effective_auto_approval and not admin_allowlisted
+                if (effective_auto_approval and not is_super_admin)
                 else None
             ),
         )

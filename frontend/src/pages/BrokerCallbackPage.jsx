@@ -50,7 +50,7 @@ export default function BrokerCallbackPage() {
             if (!requestToken || statusParam !== 'success') {
                 setStatus('error');
                 toast.error('Zerodha login failed or was cancelled');
-                setTimeout(() => navigate('/select-broker'), 2500);
+                setTimeout(() => navigate('/brokers'), 2500);
                 return;
             }
             params = { requestToken, state };
@@ -63,7 +63,7 @@ export default function BrokerCallbackPage() {
             if (!authCode || !userId) {
                 setStatus('error');
                 toast.error('Invalid Alice Blue callback — missing authCode or userId');
-                setTimeout(() => navigate('/select-broker'), 2500);
+                setTimeout(() => navigate('/brokers'), 2500);
                 return;
             }
             params = { authCode, state, brokerUserId: userId };
@@ -79,7 +79,7 @@ export default function BrokerCallbackPage() {
             if (!authCode) {
                 setStatus('error');
                 toast.error('Invalid Zebu callback — missing authorization code');
-                setTimeout(() => navigate('/select-broker'), 2500);
+                setTimeout(() => navigate('/brokers'), 2500);
                 return;
             }
             params = { authCode, state, susertoken, uid, actid };
@@ -103,7 +103,7 @@ export default function BrokerCallbackPage() {
                 if (cancelled) return;
                 setStatus('error');
                 toast.error(err.message || 'Broker connection failed');
-                setTimeout(() => navigate('/select-broker'), 2500);
+                setTimeout(() => navigate('/brokers'), 2500);
             }
         })();
 

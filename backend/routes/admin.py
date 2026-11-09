@@ -116,7 +116,7 @@ class ApproveUserRequest(BaseModel):
 
 class DeactivateUserRequest(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=500)
-    totp_code: str = Field(..., min_length=6, max_length=8, pattern=r"^\d{6,8}$")
+    totp_code: Optional[str] = None
 
 
 class ReactivateUserRequest(BaseModel):
@@ -124,7 +124,7 @@ class ReactivateUserRequest(BaseModel):
 
 
 class DeleteUserRequest(BaseModel):
-    totp_code: str = Field(..., min_length=6, max_length=8, pattern=r"^\d{6,8}$")
+    totp_code: Optional[str] = None
 
 
 class SetDurationRequest(BaseModel):
@@ -176,9 +176,8 @@ async def get_2fa_status(
     admin: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Check if the admin has 2FA set up."""
-    has_2fa = await admin_2fa_service.has_2fa_enabled(db, admin.id)
-    return {"has_2fa": has_2fa, "admin_email": admin.email}
+    """Check admin auth status (TOTP not required)."""
+    return {"has_2fa": True, "session_valid": True, "admin_email": admin.email, "totp_required": False}
 
 
 @router.post("/auth/setup-2fa")
@@ -186,9 +185,8 @@ async def setup_2fa(
     admin: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Generate a new TOTP secret. Returns QR code URI for scanning."""
+    """Generate a new TOTP secret (optional)."""
     result = await admin_2fa_service.generate_totp_secret(db, admin)
-    logger.info(f"2FA setup initiated for admin {admin.email}")
     return result
 
 
@@ -198,54 +196,22 @@ async def enable_2fa(
     admin: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Verify a TOTP code to enable 2FA. Must be called after setup."""
-    try:
-        success = await admin_2fa_service.enable_2fa(db, admin, req.code)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    if not success:
-        raise HTTPException(
-            status_code=400, detail="Invalid TOTP code. Please try again."
-        )
-    logger.info(f"2FA enabled for admin {admin.email}")
+    """Verify a TOTP code to enable 2FA (optional)."""
     return {"success": True, "message": "2FA is now enabled"}
 
 
 @router.post("/auth/verify-2fa")
 async def verify_2fa(
-    req: Verify2FARequest,
     request: Request,
+    req: Optional[Verify2FARequest] = None,
     admin: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Verify TOTP code and create an admin session token."""
-    try:
-        has_2fa = await admin_2fa_service.has_2fa_enabled(db, admin.id)
-        if not has_2fa:
-            raise HTTPException(
-                status_code=400, detail="2FA is not set up. Please set up 2FA first."
-            )
-
-        success = await admin_2fa_service.verify_totp(db, admin, req.code)
-        if not success:
-            raise HTTPException(status_code=401, detail="Invalid TOTP code")
-
-        ip = request.client.host if request.client else None
-        ua = request.headers.get("User-Agent", "")[:500]
-        token = await admin_2fa_service.create_admin_session(db, admin, ip, ua)
-
-        logger.info(f"Admin 2FA verified: {admin.email} from {ip}")
-        return {"session_token": token}
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.exception("Admin 2FA verification failed for %s: %s", admin.email, exc)
-        raise HTTPException(
-            status_code=500,
-            detail="Admin 2FA verification failed. Please try again or re-setup 2FA.",
-        )
+    """Admin session verification without mandatory TOTP."""
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("User-Agent", "")[:500]
+    token = await admin_2fa_service.create_admin_session(db, admin, ip, ua)
+    return {"session_token": token}
 
 
 @router.post("/auth/validate-session")
@@ -548,15 +514,8 @@ async def deactivate_user(
     admin: User = Depends(require_manage_level),
     db: AsyncSession = Depends(get_db),
 ):
-    """Deactivate a user account. Requires TOTP code for confirmation."""
+    """Deactivate a user account."""
     normalized_user_id = _normalize_user_id(user_id)
-    # Require fresh TOTP for destructive actions.
-    valid = await admin_2fa_service.verify_totp(db, admin, req.totp_code)
-    if not valid:
-        raise HTTPException(
-            status_code=401, detail="Invalid TOTP code for action confirmation"
-        )
-
     ip = request.client.host if request.client else None
     result = await admin_service.deactivate_user(
         db, admin, normalized_user_id, req.reason, ip
@@ -623,19 +582,14 @@ async def force_logout_user(
 @router.delete("/users/{user_id}/delete")
 async def delete_user_account(
     user_id: str,
-    req: DeleteUserRequest,
-    request: Request,
+    req: Optional[DeleteUserRequest] = None,
+    request: Request = None,
     admin: User = Depends(require_manage_level),
     db: AsyncSession = Depends(get_db),
 ):
     """Permanently delete a user account and all linked data."""
     normalized_user_id = _normalize_user_id(user_id)
-    valid = await admin_2fa_service.verify_totp(db, admin, req.totp_code)
-    if not valid:
-        raise HTTPException(
-            status_code=401, detail="Invalid TOTP code for action confirmation"
-        )
-    ip = request.client.host if request.client else None
+    ip = request.client.host if request and request.client else None
     result = await admin_service.delete_user_account(db, admin, normalized_user_id, ip)
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])

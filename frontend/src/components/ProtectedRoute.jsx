@@ -60,25 +60,11 @@ export default function ProtectedRoute({ children, requireOnboarding = false }) 
         return <Navigate to="/login" replace />;
     }
 
-    // For dashboard/app routes, ensure onboarding (one-time broker connection) is complete
-    if (requireOnboarding) {
-        const status = (user?.account_status || 'active').toLowerCase();
-        const isActive = status === 'active' && user?.is_active !== false;
-        if (!isActive) {
-            return <Navigate to="/account-status" replace />;
-        }
-
-        if (checkingBroker) {
-            // Server check in flight — trust the cached flag to avoid a flash
-            // redirect; if it disagrees with the server, we self-correct below
-            // once checkingBroker flips to false on the next render.
-            if (cachedOnboarded) return children;
-            return <AppLoader />;
-        }
-
-        if (!anyConnected) {
-            return <Navigate to="/select-broker" replace />;
-        }
+    // For dashboard/app routes, ensure account is active
+    const status = (user?.account_status || 'active').toLowerCase();
+    const isActive = status === 'active' && user?.is_active !== false;
+    if (!isActive) {
+        return <Navigate to="/account-status" replace />;
     }
 
     return children;

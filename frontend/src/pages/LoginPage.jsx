@@ -71,13 +71,7 @@ export default function LoginPage() {
     }
   };
 
-  const hasPhone = (profile) => {
-    if ((profile?.role || "").toLowerCase() === "admin") return true;
-    return Boolean(profile?.phone);
-  };
-
   const handleAuthSuccess = (profile) => {
-    if (!hasPhone(profile)) { navigate("/collect-phone"); return; }
     routeByAccountStatus(profile);
   };
 
@@ -269,8 +263,8 @@ export default function LoginPage() {
       <div className="lp-right">
 
         <div className="lp-nav">
-          <a href="/login" className="lpn-active">Live Trading</a>
-          <a href="/admin" className="lpn-muted">Admin Panel</a>
+          <a href="/login" className={!adminIntent ? "lpn-active" : "lpn-muted"}>Live Trading</a>
+          <a href="/admin" className={adminIntent ? "lpn-active" : "lpn-muted"}>Admin Panel</a>
         </div>
 
         <div className="lp-form-area">

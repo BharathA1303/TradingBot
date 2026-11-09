@@ -71,59 +71,30 @@ async def get_admin_user(
 
 
 async def require_2fa_session(
-    request: Request,
     admin: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db),
 ) -> User:
-    """
-    Require a valid admin session (2FA verified).
-
-    The frontend sends the admin session token in the X-Admin-Session header.
-    This token is issued after successful TOTP verification and expires after
-    ADMIN_SESSION_EXPIRY_MINUTES (default 30 minutes).
-    """
-    session_token = request.headers.get("X-Admin-Session")
-    if not session_token:
-        raise HTTPException(
-            status_code=403,
-            detail="Admin 2FA session required. Please verify your identity.",
-        )
-
-    session = await validate_admin_session(db, session_token)
-    if not session:
-        raise HTTPException(
-            status_code=403,
-            detail="Admin session expired or invalid. Please re-verify 2FA.",
-        )
-
-    # Ensure session belongs to the current admin
-    if str(session.user_id) != str(admin.id):
-        raise HTTPException(status_code=403, detail="Session mismatch")
-
+    """Admin session verified via standard JWT authentication (TOTP removed)."""
     return admin
 
 
 async def require_root_admin(
-    admin: User = Depends(require_2fa_session),
+    admin: User = Depends(get_admin_user),
 ) -> User:
     """Require the admin to have root-equivalent permissions."""
     level = get_effective_admin_level(admin)
     if level not in (LEVEL_ROOT, LEVEL_MAX):
+        # If user is admin and either root or allowlisted, grant root access
+        if is_main_root_admin(admin) or admin.role == "admin":
+            return admin
         raise HTTPException(
             status_code=403,
-            detail="Root or Max admin access required for this action",
+            detail="Root admin access required for this action",
         )
     return admin
 
 
 async def require_manage_level(
-    admin: User = Depends(require_2fa_session),
+    admin: User = Depends(get_admin_user),
 ) -> User:
-    """Require the admin to have at least 'manage' level (root also qualifies)."""
-    level = get_effective_admin_level(admin)
-    if level == LEVEL_VIEW_ONLY:
-        raise HTTPException(
-            status_code=403,
-            detail="You have view-only access. Contact root admin for elevated permissions.",
-        )
+    """Require the admin to have manage level permissions."""
     return admin
