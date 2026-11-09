@@ -428,34 +428,11 @@ async def root():
 @app.get("/api/health")
 async def health():
     """Enhanced health endpoint with worker, engine, and session status."""
-    import config.firebase as fb_mod
-    import os
-
-    creds_path = os.environ.get("FIREBASE_CREDENTIALS_PATH", "")
-    creds_json_set = bool(os.environ.get("FIREBASE_CREDENTIALS_JSON", ""))
-    creds_file_exists = os.path.isfile(creds_path) if creds_path else False
-    creds_file_size = os.path.getsize(creds_path) if creds_file_exists else 0
-    creds_readable = os.access(creds_path, os.R_OK) if creds_file_exists else False
-
-    # Try to diagnose Firebase init failure
-    firebase_error = None
-    if not fb_mod._initialized:
-        try:
-            fb_mod.init_firebase()
-        except Exception as e:
-            firebase_error = f"{type(e).__name__}: {e}"
-
     return {
         "status": "healthy",
-        "firebase": {
-            "initialized": fb_mod._initialized,
-            "init_error": firebase_error,
-            "credentials_path": creds_path,
-            "credentials_file_exists": creds_file_exists,
-            "credentials_file_readable": creds_readable,
-            "credentials_file_size": creds_file_size,
-            "credentials_json_env_set": creds_json_set,
-            "process_uid": os.getuid() if hasattr(os, "getuid") else "N/A",
+        "auth": {
+            "mode": "jwt",
+            "provider": "tradingbot",
         },
         "market_session": market_session.get_session_info(),
         "event_bus": event_bus.get_stats(),

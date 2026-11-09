@@ -8,6 +8,8 @@ from services.jwt_service import decode_token
 
 logger = logging.getLogger(__name__)
 
+_initialized: bool = True
+
 
 def init_firebase() -> None:
     logger.info("TradingBot uses JWT auth — Firebase not initialized")
