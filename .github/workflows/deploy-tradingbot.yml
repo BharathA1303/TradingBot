@@ -241,6 +241,17 @@ jobs:
               "TB_GROQ_API_KEY=${TB_GROQ_API_KEY}" > "${DEPLOY_DIR}/.env"
             chmod 600 "${DEPLOY_DIR}/.env"
 
+            # Ensure 2GB swap file exists on low-memory EC2 instances to avoid freeze/OOM
+            if [ $(free -m | awk '/^Swap:/ {print $2}') -lt 1024 ]; then
+              echo "=== Ensuring 2GB swap file for memory safety ==="
+              if [ ! -f /swapfile ]; then
+                sudo fallocate -l 2G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 2>/dev/null
+                sudo chmod 600 /swapfile
+                sudo mkswap /swapfile 2>/dev/null || true
+              fi
+              sudo swapon /swapfile 2>/dev/null || true
+            fi
+
             echo "=== Logging in to GHCR ==="
             retry 4 8 bash -c 'echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin'
 
@@ -255,47 +266,58 @@ jobs:
             echo "=== Verifying uploaded files ==="
             ls -la docker-compose.tradingbot.yml deploy/nginx/tradingbot.conf || true
 
-            echo "=== Updating ONLY the tradingbot stack (hive-* stacks untouched) ==="
-            # SAFETY: scoped strictly to project 'tradingbot'.
-            # NO --remove-orphans to avoid touching other stacks.
+            echo "=== Starting DB & Redis first to synchronize credentials ==="
             docker compose -p tradingbot \
               -f docker-compose.tradingbot.yml \
               --env-file .env \
-              up -d --no-build
+              up -d tradingbot-pg tradingbot-redis
 
-            # Synchronize DB password (handles case where volume was initialized with fallback password)
+            # Wait for Postgres to accept connections and sync password
             echo "=== Syncing DB password ==="
-            for pgi in $(seq 1 15); do
+            for pgi in $(seq 1 20); do
               if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg pg_isready -U tradingbot 2>/dev/null; then
                 docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
                   psql -U tradingbot -d tradingbot -c "ALTER USER tradingbot WITH PASSWORD '${TB_POSTGRES_PASSWORD}';" 2>/dev/null || true
-                docker restart tradingbot-backend >/dev/null 2>&1 || true
+                echo "DB password confirmed synchronized!"
                 break
               fi
               sleep 2
             done
 
-            echo "=== Waiting for backend health (max 180s) ==="
+            echo "=== Updating FULL tradingbot stack (hive-* stacks untouched) ==="
+            # SAFETY: scoped strictly to project 'tradingbot'.
+            docker compose -p tradingbot \
+              -f docker-compose.tradingbot.yml \
+              --env-file .env \
+              up -d --no-build
+
+            echo "=== Waiting for backend health (max 120s) ==="
             HEALTHY=0
-            for i in $(seq 1 60); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
-              if [ "${STATUS}" = "healthy" ]; then
-                echo "Backend healthy after $((i * 3))s!"
+            for i in $(seq 1 40); do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8003/api/health 2>/dev/null || echo "000")
+              if [ "${HTTP_CODE}" = "200" ]; then
+                echo "Backend healthy! Responded HTTP 200 after $((i * 3))s!"
                 HEALTHY=1; break
               fi
+
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
               STATE=$(docker inspect --format='{{.State.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
-              if [ "${STATE}" = "exited" ] || [ "${STATE}" = "dead" ]; then
-                echo "ERROR: Backend crashed. Last 100 log lines:"
-                docker logs tradingbot-backend --tail 100 2>&1
-                exit 1
+              echo "  waiting... ($((i * 3))s, http=${HTTP_CODE}, status=${STATUS}, state=${STATE})"
+
+              if [ $((i % 5)) -eq 0 ]; then
+                echo "--- Recent backend logs ---"
+                docker logs tradingbot-backend --tail 15 2>&1 || true
+                echo "---------------------------"
               fi
-              echo "  waiting... ($((i * 3))s, status=${STATUS} state=${STATE})"
+
               sleep 3
             done
 
             if [ "${HEALTHY}" -eq 0 ]; then
-              echo "ERROR: Backend did not become healthy in 180s. Last 100 log lines:"
+              echo "ERROR: Backend did not become healthy in 120s. Full backend logs:"
               docker logs tradingbot-backend --tail 100 2>&1
+              echo "PostgreSQL logs:"
+              docker logs tradingbot-pg --tail 50 2>&1
               exit 1
             fi
 

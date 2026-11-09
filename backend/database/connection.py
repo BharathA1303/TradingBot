@@ -45,14 +45,18 @@ def _safe_database_url(url_str: str) -> str:
         return url_str
     try:
         prefix, sep, rest = url_str.partition("://")
-        if sep and rest.count("@") > 1:
-            last_at_idx = rest.rfind("@")
-            user_pass = rest[:last_at_idx]
-            host_db = rest[last_at_idx + 1:]
-            if ":" in user_pass:
-                user, password = user_pass.split(":", 1)
-                safe_pass = urllib.parse.quote_plus(password)
-                return f"{prefix}://{user}:{safe_pass}@{host_db}"
+        if not sep:
+            return url_str
+        last_at_idx = rest.rfind("@")
+        if last_at_idx == -1:
+            return url_str
+        user_pass = rest[:last_at_idx]
+        host_db = rest[last_at_idx + 1:]
+        if ":" in user_pass:
+            user, password = user_pass.split(":", 1)
+            unquoted_pass = urllib.parse.unquote_plus(password)
+            safe_pass = urllib.parse.quote_plus(unquoted_pass)
+            return f"{prefix}://{user}:{safe_pass}@{host_db}"
         return url_str
     except Exception:
         return url_str

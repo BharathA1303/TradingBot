@@ -59,10 +59,10 @@ services:
       - SMTP_FROM_NAME=TradingBot
     healthcheck:
       test: ["CMD", "curl", "-f", "-s", "http://localhost:8000/api/health"]
-      interval: 10s
-      timeout: 8s
-      retries: 15
-      start_period: 120s
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
     depends_on:
       tradingbot-pg:
         condition: service_healthy

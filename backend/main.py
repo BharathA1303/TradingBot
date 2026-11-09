@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
 
     # ── Load Zebu master contracts (NSE and BSE equities via live Zebu CDN) ──
     try:
-        from services.contract_loader import get_nse_contracts_cached
+        from services.contract_loader import get_nse_contracts_cached, fetch_zebu_contracts
         from providers.symbol_mapper import load_zebu_contracts
 
         # Fetch NSE contracts (cached for on-demand symbol registration)
@@ -171,15 +171,16 @@ async def lifespan(app: FastAPI):
     )
     logger.info(f"Futures Contracts Available: {total_futures} total")
 
-    # Check NSE API accessibility
-    try:
-        from services.nse_options_service import _fetch_nse
-
-        test_nse = await _fetch_nse("option-chain-indices?symbol=NIFTY")
-        nse_status = "ACCESSIBLE" if test_nse else "UNAVAILABLE"
-    except Exception as e:
-        nse_status = f"ERROR: {str(e)[:50]}"
-    logger.info(f"NSE Options API: {nse_status}")
+    # Check NSE API accessibility asynchronously (non-blocking)
+    async def _check_nse_api():
+        try:
+            from services.nse_options_service import _fetch_nse
+            test_nse = await _fetch_nse("option-chain-indices?symbol=NIFTY")
+            nse_status = "ACCESSIBLE" if test_nse else "UNAVAILABLE"
+        except Exception as e:
+            nse_status = f"ERROR: {str(e)[:50]}"
+        logger.info(f"NSE Options API: {nse_status}")
+    asyncio.create_task(_check_nse_api())
 
     logger.info("=" * 70)
     logger.info("DATA AVAILABILITY SUMMARY:")
