@@ -273,7 +273,45 @@ jobs:
               retry 3 5 docker pull "${FRONTEND_IMAGE}:latest"
               docker tag "${FRONTEND_IMAGE}:latest" tradingbot-frontend:latest
 
-              echo "=== Ensuring TradingBot stack is running ==="
+              echo "=== Ensuring DB and Redis are up ==="
+              docker compose -p tradingbot \
+                -f docker-compose.tradingbot.yml \
+                --env-file .env \
+                up -d tradingbot-pg tradingbot-redis
+
+              # Verify database connectivity and credentials
+              echo "=== Checking DB authentication ==="
+              DB_READY=0
+              for i in $(seq 1 10); do
+                if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
+                    sh -c 'PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT 1;"' >/dev/null 2>&1; then
+                  echo "PostgreSQL authentication successful!"
+                  DB_READY=1
+                  break
+                fi
+                sleep 1
+              done
+
+              if [ "${DB_READY}" -eq 0 ]; then
+                echo "DB credentials mismatch or fresh start requested."
+                echo "Recreating tradingbot-pg volume with correct credentials..."
+                docker compose -p tradingbot -f docker-compose.tradingbot.yml stop tradingbot-backend tradingbot-pg
+                docker compose -p tradingbot -f docker-compose.tradingbot.yml rm -f tradingbot-pg
+                # Strictly target tradingbot postgres volume (hive volume untouched)
+                docker volume ls -q | grep -E "tradingbot.*pgdata" | xargs -r docker volume rm || true
+                docker compose -p tradingbot -f docker-compose.tradingbot.yml --env-file .env up -d tradingbot-pg
+                echo "Waiting for fresh PostgreSQL instance to initialize..."
+                for i in $(seq 1 15); do
+                  if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
+                      sh -c 'PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT 1;"' >/dev/null 2>&1; then
+                    echo "Fresh PostgreSQL instance ready with current credentials!"
+                    break
+                  fi
+                  sleep 1
+                done
+              fi
+
+              echo "=== Starting Full TradingBot Stack ==="
               docker compose -p tradingbot \
                 -f docker-compose.tradingbot.yml \
                 --env-file .env \
