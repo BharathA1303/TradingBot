@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import FeedbackWidget from '../FeedbackWidget';
+import BrokerConnectNotifier from '../common/BrokerConnectNotifier';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useLivePortfolio } from '../../hooks/useLivePortfolio';
 import { useTheme } from '../../context/ThemeContext';
@@ -119,6 +120,7 @@ export default function AppShell() {
             </AdaptiveSidebarManager>
             <div id="portal-root" />
             <FeedbackWidget />
+            <BrokerConnectNotifier />
         </div>
     );
 }

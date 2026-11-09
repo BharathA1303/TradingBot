@@ -15,6 +15,7 @@ import { useAuthStore } from './stores/useAuthStore';
 // ── Eagerly loaded (prevents flash on refresh) ───────────────────────────────
 import LoginPage from './pages/LoginPage';
 import PortfolioPage from './pages/PortfolioPage';
+import WatchlistPage from './pages/WatchlistPage';
 import OrdersPage from './pages/OrdersPage';
 import ZeroLossPage from './pages/ZeroLossPage';
 import SettingsPage from './pages/SettingsPage';
@@ -92,6 +93,7 @@ export default function App() {
                             }
                         >
                             <Route path="/dashboard" element={<DashboardWorkspace />} />
+                            <Route path="/watchlist" element={<WatchlistPage />} />
                             <Route path="/brokers" element={<BrokersPage />} />
                             <Route path="/mentor" element={<AIMentorPage />} />
                             <Route path="/terminal" element={<TradingWorkspace />} />

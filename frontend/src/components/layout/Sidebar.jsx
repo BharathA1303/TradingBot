@@ -6,6 +6,7 @@ import { cn } from "../../utils/cn";
 import {
   LayoutDashboard,
   ChartCandlestick,
+  Bookmark,
   Briefcase,
   Shield,
   Settings,
@@ -30,10 +31,11 @@ function getInitials(user) {
 /* ─── Nav item list (no logo, no brand title) ─────────────────── */
 const NAV_ITEMS = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/brokers", icon: Link2, label: "Broker Connect" },
+  { to: "/watchlist", icon: Bookmark, label: "Watchlist" },
   { to: "/terminal", icon: ChartCandlestick, label: "Terminal" },
   { to: "/orders", icon: ClipboardList, label: "Orders" },
   { to: "/portfolio", icon: Briefcase, label: "Portfolio" },
+  { to: "/brokers", icon: Link2, label: "Broker Connect" },
   { to: "/auto-alpha", icon: Shield, label: "Alpha Auto" },
   { to: "/mentor", icon: Lightbulb, label: "AI Mentor" },
 ];

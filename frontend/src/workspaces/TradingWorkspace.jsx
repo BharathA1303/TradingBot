@@ -115,7 +115,7 @@ export default function TradingWorkspace() {
     const [watchlistToggleBusy, setWatchlistToggleBusy] = useState(false);
     const [bottomCollapsed, setBottomCollapsed] = useState(false);
     const [bottomHeight, setBottomHeight] = useState(DEFAULT_BOTTOM_HEIGHT);
-    const [watchlistVisible, setWatchlistVisible] = useState(true);
+    const [watchlistVisible, setWatchlistVisible] = useState(false);
     const [orderPanelVisible, setOrderPanelVisible] = useState(false);
     const getDefaultOrderPanelPos = useCallback(() => ({
         x: Math.max(16, window.innerWidth - ORDER_FLOAT_WIDTH - 16),
@@ -556,6 +556,8 @@ export default function TradingWorkspace() {
         <div
             className={cn(
                 'terminal-grid',
+                (!watchlistVisible || !isWide) && 'terminal-grid--no-watchlist',
+                isWide && 'terminal-grid--no-right',
                 isCompact ? 'h-full min-h-0 flex-1' : 'h-[calc(100vh-56px-36px)]',
             )}
             onFocus={() => setIsTerminalFocused(true)}

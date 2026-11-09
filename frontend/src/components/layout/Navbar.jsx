@@ -159,27 +159,6 @@ export default function Navbar({ onMenuToggle }) {
     );
 
     const user = useAuthStore((s) => s.user);
-    const firstName = user?.full_name?.split(' ')[0] || user?.username || 'Trader';
-
-    const dateStr = useMemo(() => {
-        try {
-            return new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-            }).toUpperCase();
-        } catch {
-            return '';
-        }
-    }, []);
-
-    const greeting = useMemo(() => {
-        const hr = new Date().getHours();
-        if (hr < 12) return 'Good morning';
-        if (hr < 17) return 'Good afternoon';
-        return 'Good evening';
-    }, []);
-
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [popularResults, setPopularResults] = useState([]);
@@ -450,15 +429,6 @@ export default function Navbar({ onMenuToggle }) {
                 >
                     <Menu className="w-5 h-5" />
                 </button>
-
-                <div className="hidden md:flex flex-col min-w-0 mr-2 select-none">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        {dateStr}
-                    </span>
-                    <h2 className="text-base lg:text-lg font-bold text-heading font-display tracking-tight leading-tight truncate">
-                        {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400">{firstName}</span>
-                    </h2>
-                </div>
 
                 <div className="relative flex-1 min-w-0 max-w-[280px] lg:max-w-[320px]" ref={searchRef}>
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
