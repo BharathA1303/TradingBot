@@ -210,7 +210,6 @@ jobs:
             -o ServerAliveInterval=15
             -o ServerAliveCountMax=4
             -o ConnectTimeout=15
-            -p 22
           )
 
           echo "=== Generating environment configuration ==="
