@@ -1,11 +1,11 @@
 {
-    "name": "AlphaSync — Paper Trading Platform",
-    "short_name": "AlphaSync",
+    "name": "TradingBot — Trading Platform",
+    "short_name": "TradingBot",
     "description": "India's most comprehensive paper trading platform. Practice stock trading strategies on NSE & BSE markets — free forever.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f0f1e",
-    "theme_color": "#00bcd4",
+    "theme_color": "#10b981",
     "icons": [
         {
             "src": "/favicon.png",

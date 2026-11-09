@@ -9,22 +9,19 @@ import { useLiveMarketIndices } from '../market/hooks/useLiveMarketIndices';
 import api from '../services/api';
 import {
     TrendingUp, TrendingDown, IndianRupee,
-    BarChart3, ArrowRight, Zap, Briefcase,
-    ShieldCheck, ClipboardList, Globe, Landmark,
+    BarChart3, ArrowRight, Briefcase,
+    ShieldCheck, ClipboardList, Link2,
 } from 'lucide-react';
 import { formatCurrency, formatPrice, formatPercent, pnlColorClass, cleanSymbol } from '../utils/formatters';
 import { buildPortfolioMetrics } from '../utils/portfolioMetrics';
 import { Skeleton } from '../components/ui';
 import { cn } from '../utils/cn';
-import LeaderboardButton from '../components/ui/LeaderboardButton';
 
 const NAV_CARDS = [
     { to: '/terminal', icon: BarChart3, label: 'Terminal', desc: 'Live charts & order execution', accent: true },
-    { to: '/market', icon: Globe, label: 'Market', desc: 'Indices & market overview' },
-    { to: '/futures', icon: Landmark, label: 'Futures', desc: 'Dummy futures strikes by stock' },
+    { to: '/brokers', icon: Link2, label: 'Broker Connect', desc: 'Live broker integrations' },
     { to: '/portfolio', icon: Briefcase, label: 'Portfolio', desc: 'Holdings & performance' },
     { to: '/orders', icon: ClipboardList, label: 'Orders', desc: 'Order history & status' },
-    { to: '/algo', icon: Zap, label: 'Algo Trading', desc: 'Automated strategies' },
     { to: '/auto-alpha', icon: ShieldCheck, label: 'Alpha Auto', desc: 'AI-managed momentum strategy' },
 ];
 
@@ -509,7 +506,6 @@ export default function DashboardWorkspace() {
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <LeaderboardButton />
                     <Link to="/terminal" className="btn-primary text-sm hidden sm:inline-flex items-center gap-2" aria-label="Open trading terminal">
                         Trade Now <ArrowRight className="w-4 h-4" />
                     </Link>

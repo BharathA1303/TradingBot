@@ -372,7 +372,7 @@ const AIMentor = () => {
               </form>
 
               <p className="text-xs text-cyan-100/75 text-center">
-                Powered by AlphaSync Mentor AI
+                Powered by TradingBot Mentor AI
               </p>
             </div>
           </>

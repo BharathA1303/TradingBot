@@ -569,7 +569,7 @@ function AccountReset() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('This will permanently delete your account and all data.\n\nYou will need to register again to use AlphaSync. Continue?')) return;
+    if (!confirm('This will permanently delete your account and all data.\n\nYou will need to register again to use TradingBot. Continue?')) return;
     if (!confirm('Final confirmation: delete this account permanently? This cannot be undone.')) return;
     setDeleteLoading(true);
     try {
@@ -761,7 +761,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `alphasync-settings-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `tradingbot-settings-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Settings exported");
@@ -1001,7 +1001,7 @@ export default function SettingsPage() {
             <div className="space-y-4">
               {/* Theme */}
               <div className="rounded-xl border border-edge/5 bg-surface-900/60 p-6">
-                <SectionHeader title="Theme" description="Choose how AlphaSync looks to you" />
+                <SectionHeader title="Theme" description="Choose how TradingBot looks to you" />
 
                 {/* Theme cards */}
                 <div className="grid grid-cols-3 gap-3 mb-5">
@@ -1395,7 +1395,7 @@ export default function SettingsPage() {
 
               {/* Version info */}
               <div className="text-center py-3">
-                <p className="text-[11px] text-gray-600">AlphaSync v1.0.0 · Paper Trading Platform</p>
+                <p className="text-[11px] text-gray-600">TradingBot v1.0.0 · Trading Platform</p>
                 <p className="text-[10px] text-gray-600 mt-0.5">All data is simulated. No real money involved.</p>
               </div>
             </div>

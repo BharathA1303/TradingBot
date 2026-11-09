@@ -6,7 +6,7 @@ export default function AppLoader({ className = '' }) {
     const activeTheme = theme === 'dark' ? 'dark' : 'light';
 
     return (
-        <div className={cn('app-loader-screen', activeTheme, className)} role="status" aria-label="Loading AlphaSync">
+        <div className={cn('app-loader-screen', activeTheme, className)} role="status" aria-label="Loading TradingBot">
             <div className="app-loader-mark" aria-hidden="true">
                 <span className="app-loader-ring" />
                 <span className="app-loader-logo-shell">

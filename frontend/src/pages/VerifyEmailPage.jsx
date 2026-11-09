@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import usePageMeta from "../hooks/usePageMeta";
 
 export default function VerifyEmailPage() {
-  usePageMeta("Verify Your Email — AlphaSync", "Please verify your email address to start trading.");
+  usePageMeta("Verify Your Email — TradingBot", "Please verify your email address to start trading.");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
     setChecking(true);
     try {
       await loginWithEmail(email, password);
-      toast.success("Email verified! Welcome to AlphaSync.");
+      toast.success("Email verified! Welcome to TradingBot.");
       sessionStorage.removeItem("alphasync_verify_email");
       navigate("/dashboard");
     } catch (err) {
@@ -130,7 +130,7 @@ export default function VerifyEmailPage() {
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-              <p className="text-sm text-slate-600">Click the verification link from AlphaSync</p>
+              <p className="text-sm text-slate-600">Click the verification link from TradingBot</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>

@@ -412,7 +412,7 @@ function FeedbackWidget() {
                                     <span>How&apos;s your experience?</span>
                                     <span className="inline-block animate-[textPulse_1.2s_ease-in-out_infinite]">👋</span>
                                 </div>
-                                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Your feedback helps us tune AlphaSync.</p>
+                                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Your feedback helps us tune TradingBot.</p>
                             </div>
 
                             <div className="mt-5 flex items-center gap-2">

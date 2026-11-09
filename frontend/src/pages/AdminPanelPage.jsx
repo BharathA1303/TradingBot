@@ -1577,7 +1577,7 @@ export default function AdminPanelPage() {
                     <div className="space-y-4">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]" style={{ background: 'rgba(0,188,212,0.12)', color: 'var(--brand)', border: '1px solid rgba(0,188,212,0.24)' }}>
-                                <Shield size={13} /> AlphaSync Control Center
+                                <Shield size={13} /> TradingBot Control Center
                             </span>
                             {authStage === 'dashboard' && <LevelPill level={effectiveAdminLevel} />}
                             {isRoot && (

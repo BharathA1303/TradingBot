@@ -10,7 +10,7 @@ const QUICK_PROMPTS = [
   'Help me build a morning market routine.',
 ];
 
-const WELCOME_MESSAGE = "Hi, I'm Sarah — your AlphaSync mentor. I can help with product navigation, F&O basics, position risk checks, and safe trade steps. Tell me your question or paste your position details.";
+const WELCOME_MESSAGE = "Hi, I'm Sarah — your TradingBot mentor. I can help with product navigation, risk management, position checks, and safe trade steps. Tell me your question or paste your trade details.";
 
 const toRecentMessages = (items, nextUserText = '') => {
   const next = [...(items || [])];

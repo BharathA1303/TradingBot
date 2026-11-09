@@ -23,12 +23,7 @@ function OrderHistoryPanel({ orders = [], className, showHeader = true }) {
     const handleSelectSymbol = useCallback((symbol) => {
         if (!symbol) return;
         const clean = String(symbol).trim().toUpperCase();
-        const isFuture = clean.endsWith('FUT') || clean.endsWith('F') || /\d{2}[A-Z]{3}/.test(clean);
-        if (isFuture) {
-            navigate(`/futures?symbol=${encodeURIComponent(clean)}`);
-        } else {
-            navigate(`/terminal?symbol=${encodeURIComponent(clean)}`);
-        }
+        navigate(`/terminal?symbol=${encodeURIComponent(clean)}`);
     }, [navigate]);
 
     const openOnly = useMemo(() => (order) => String(order?.status || '').toUpperCase() === 'OPEN', []);

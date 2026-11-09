@@ -99,7 +99,7 @@ function ZebuHelpPanel({ redirectUrl }) {
           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">5</span>
           <span>
             Click <strong>Add Broker</strong>. Sessions expire at midnight IST — with password + DOB saved,
-            AlphaSync reconnects automatically each day.
+            TradingBot reconnects automatically each day.
           </span>
         </li>
       </ol>

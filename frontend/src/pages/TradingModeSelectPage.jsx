@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
+import TradingBotLogo from '../components/common/TradingBotLogo';
 import {
     BarChart3,
     Zap,
@@ -155,7 +156,7 @@ export default function TradingModeSelectPage() {
                     style={{ animation: showContent ? 'fadeSlideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both' : 'none' }}
                 >
                     <div className="flex justify-center mb-5">
-                        <a href="https://www.alphasync.app/"><img src="/logo.svg" alt="TradingBot" className="h-12 sm:h-14 object-contain logo-dark-bg" /></a>
+                        <Link to="/dashboard"><TradingBotLogo size="lg" /></Link>
                     </div>
 
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4 backdrop-blur-md">

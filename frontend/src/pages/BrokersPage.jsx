@@ -219,7 +219,7 @@ export default function BrokersPage() {
 
     const handleDisconnect = async () => {
         if (!connectedBroker || !connectedMeta) return;
-        if (!window.confirm(`Disconnect ${connectedMeta.name}? You'll need to connect a broker again to keep using AlphaSync.`)) return;
+        if (!window.confirm(`Disconnect ${connectedMeta.name}? You'll need to connect a broker again to keep using TradingBot.`)) return;
         setBusyBroker(connectedBroker);
         try {
             await disconnect(connectedBroker);

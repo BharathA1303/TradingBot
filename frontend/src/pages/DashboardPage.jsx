@@ -6,14 +6,13 @@ import { useMarketStore } from '../store/useMarketStore';
 import api from '../services/api';
 import {
     TrendingUp, TrendingDown, IndianRupee,
-    BarChart3, ArrowRight, Zap, Briefcase,
-    ShieldCheck,
+    BarChart3, ArrowRight, Briefcase,
+    ShieldCheck, Link2,
 } from 'lucide-react';
 import { formatCurrency, formatPrice, formatPercent, pnlColorClass, cleanSymbol } from '../utils/formatters';
 import { buildPortfolioMetrics } from '../utils/portfolioMetrics';
 import { Skeleton } from '../components/ui';
 import { cn } from '../utils/cn';
-import LeaderboardButton from '../components/ui/LeaderboardButton';
 
 /* ── Mini SVG Sparkline ──────────────────────────────────────────────────────── */
 function MiniSparkline({ data = [], color = 'var(--bullish)', width = 80, height = 24 }) {
@@ -119,7 +118,6 @@ export default function DashboardPage() {
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <LeaderboardButton />
                     <Link to="/terminal" className="btn-primary text-sm hidden sm:inline-flex items-center gap-2" aria-label="Open trading terminal">
                         Trade Now <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -217,8 +215,8 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                         {[
                             { to: '/terminal', icon: BarChart3, label: 'Trading Terminal', desc: 'Charts & order execution', iconBg: 'bg-primary-500/10', iconColor: 'text-primary-600', border: 'border-primary-500/15  hover:border-primary-500/30' },
+                            { to: '/brokers', icon: Link2, label: 'Broker Connect', desc: 'Link live broker accounts', iconBg: 'bg-accent-purple/10', iconColor: 'text-accent-purple', border: 'border-accent-purple/15 hover:border-accent-purple/30' },
                             { to: '/portfolio', icon: Briefcase, label: 'Portfolio', desc: 'Holdings & P&L tracking', iconBg: 'bg-bull/10', iconColor: 'text-bull', border: 'border-bull/15         hover:border-bull/30' },
-                            { to: '/algo', icon: Zap, label: 'Algo Strategies', desc: 'Automated trading bots', iconBg: 'bg-accent-purple/10', iconColor: 'text-accent-purple', border: 'border-accent-purple/15 hover:border-accent-purple/30' },
                             { to: '/auto-alpha', icon: ShieldCheck, label: 'Alpha Auto', desc: 'AI-managed high-conviction trades', iconBg: 'bg-accent-amber/10', iconColor: 'text-accent-amber', border: 'border-accent-amber/15  hover:border-accent-amber/30' },
                         ].map(({ to, icon: Icon, label, desc, iconBg, iconColor, border }) => (
                             <Link key={to} to={to} aria-label={label}

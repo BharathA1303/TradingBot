@@ -1,26 +1,20 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { useTheme } from "../../context/ThemeContext";
 import Tooltip from "../ui/Tooltip";
 import { cn } from "../../utils/cn";
 import { SIDEBAR_EXPANDED_W, SIDEBAR_COLLAPSED_W } from "../../utils/constants";
+import TradingBotLogo from "../common/TradingBotLogo";
 import {
   Menu,
   ChevronLeft,
   LayoutDashboard,
-  Trophy,
   ChartCandlestick,
   Briefcase,
-  Bot,
   Shield,
-  Bug,
   Settings,
   LogOut,
-  Globe,
   ClipboardList,
-  Landmark,
-  Gem,
-  FlipHorizontal2,
   Lightbulb,
   Link2,
 } from "lucide-react";
@@ -95,9 +89,7 @@ const NAV_SECTIONS = [
     items: [
       { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/brokers", icon: Link2, label: "Broker Connect" },
-      { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
       { to: "/terminal", icon: ChartCandlestick, label: "Terminal" },
-      { to: "/market", icon: Globe, label: "Market" },
     ],
   },
   {
@@ -105,9 +97,6 @@ const NAV_SECTIONS = [
     items: [
       { to: "/orders", icon: ClipboardList, label: "Orders" },
       { to: "/portfolio", icon: Briefcase, label: "Portfolio" },
-      { to: "/futures", icon: Landmark, label: "Futures" },
-      { to: "/options", icon: FlipHorizontal2, label: "Options" },
-      { to: "/algo", icon: Bot, label: "Algo Trading" },
       { to: "/auto-alpha", icon: Shield, label: "Alpha Auto" },
       { to: "/mentor", icon: Lightbulb, label: "AI Mentor" },
     ],
@@ -179,7 +168,6 @@ export default function Sidebar({ collapsed, onToggle }) {
   const user = useAuthStore((s) => s.user); // reactive — updates instantly on photo change
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const collapsedLogoSrc = theme === "dark" ? "/white-logo.png" : "/dark-logo.png";
 
   const closeMobileDrawer = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024 && !collapsed) {
@@ -235,20 +223,14 @@ export default function Sidebar({ collapsed, onToggle }) {
                 <Menu className="w-4.5 h-4.5" />
               </button>
 
-              <a
-                href="https://www.alphasync.app/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/dashboard"
+                onClick={closeMobileDrawer}
                 className="inline-flex items-center justify-center w-full flex-1 min-h-0"
                 title="TradingBot"
               >
-                <img
-                  src={collapsedLogoSrc}
-                  alt="TradingBot"
-                  draggable={false}
-                  className="h-12 w-12 max-w-[52px] max-h-[52px] object-contain flex-shrink-0"
-                />
-              </a>
+                <TradingBotLogo collapsed={true} size="md" />
+              </Link>
             </>
           ) : (
             <>
@@ -263,22 +245,17 @@ export default function Sidebar({ collapsed, onToggle }) {
               </button>
 
               <div className="flex items-center w-full h-full justify-start pr-10">
-                <a
-                  href="https://www.alphasync.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block min-w-0 flex-1"
+                <Link
+                  to="/dashboard"
+                  onClick={closeMobileDrawer}
+                  className="flex items-center min-w-0"
+                  title="TradingBot Dashboard"
                 >
-                  <img
-                    src="/logo.svg"
-                    alt="TradingBot"
-                    className="h-12 max-w-[170px] object-contain object-left transition-all duration-300 logo-light-adapt"
-                  />
-                </a>
+                  <TradingBotLogo collapsed={false} size="md" />
+                </Link>
               </div>
             </>
           )}
-          {/* Tagline — only visible when collapsed (expanded version is inline with logo) */}
         </div>
 
         {/* ── Divider ── */}
@@ -334,32 +311,6 @@ export default function Sidebar({ collapsed, onToggle }) {
               )}
             >
               Settings
-            </span>
-          </NavLink>
-
-          {/* Report */}
-          <NavLink
-            to="/bug-report"
-            onClick={closeMobileDrawer}
-            title={collapsed ? "Report" : undefined}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center h-8 rounded-md transition-colors duration-150 font-medium",
-                collapsed ? "justify-center w-10 mx-auto" : "gap-3 px-3 w-full",
-                isActive
-                  ? "text-primary-600 bg-primary-500/[0.08]"
-                  : "text-gray-500 hover:text-heading hover:bg-overlay/[0.04]",
-              )
-            }
-          >
-            <Bug className="w-4 h-4 flex-shrink-0" />
-            <span
-              className={cn(
-                "text-[12px] font-medium whitespace-nowrap overflow-hidden transition-all duration-200 ease-in-out",
-                collapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[140px]"
-              )}
-            >
-              Report
             </span>
           </NavLink>
 

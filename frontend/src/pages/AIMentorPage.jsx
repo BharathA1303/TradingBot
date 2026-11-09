@@ -32,7 +32,7 @@ const makeConversation = (title = 'New chat') => ({
     messages: [],
 });
 
-const WELCOME_MESSAGE = "Hi, I'm Sarah — your AlphaSync mentor. I can help with product navigation, F&O basics, position risk checks, and safe trade steps. Tell me your question or paste your position details.";
+const WELCOME_MESSAGE = "Hi, I'm Sarah — your TradingBot mentor. I can help with product navigation, risk management, position checks, and safe trade steps. Tell me your question or paste your position details.";
 
 const makeMessage = (type, content) => ({
     id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -474,7 +474,7 @@ export default function AIMentorPage() {
             const who = msg.type === 'user' ? 'You' : msg.type === 'error' ? 'System' : 'AI Mentor';
             return `[${formatTime(msg.timestamp)}] ${who}: ${msg.content}`;
         });
-        const data = [`AlphaSync AI Mentor Chat`, `Date: ${new Date().toLocaleString('en-IN')}`, '', ...lines].join('\n');
+        const data = [`TradingBot AI Mentor Chat`, `Date: ${new Date().toLocaleString('en-IN')}`, '', ...lines].join('\n');
         const blob = new Blob([data], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1010,8 +1010,8 @@ export default function AIMentorPage() {
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={handleComposerKeyDown}
                                         placeholder={isMobileLayout
-                                            ? 'Ask Sarah about AlphaSync, risk, or strategy...'
-                                            : 'Ask Sarah anything about AlphaSync, risk, strategy, or market basics...'}
+                                            ? 'Ask Sarah about TradingBot, risk, or strategy...'
+                                            : 'Ask Sarah anything about TradingBot, risk, strategy, or trading basics...'}
                                         disabled={sending}
                                         rows={1}
                                         maxLength={2000}

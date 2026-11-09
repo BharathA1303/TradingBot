@@ -1,5 +1,8 @@
 
 
+import { Link } from "react-router-dom";
+import TradingBotLogo from "../common/TradingBotLogo";
+
 const SOCIAL_PROOF = [
   "500+ Active Traders",
   "₹50 Cr+ Simulated",
@@ -17,9 +20,9 @@ export default function AuthPanelLeft({ children }) {
     >
       <div className="relative w-full h-full flex flex-col overflow-hidden">
         <div className="relative z-10 px-9 pt-9 flex-shrink-0">
-          <a href="https://www.alphasync.app/">
-            <img src="/logo.svg" alt="TradingBot" className="h-16 object-contain logo-dark-bg" />
-          </a>
+          <Link to="/login" className="inline-block">
+            <TradingBotLogo size="lg" />
+          </Link>
         </div>
 
         <div className="relative z-10 flex-1 flex flex-col justify-center px-7 py-3 overflow-hidden">

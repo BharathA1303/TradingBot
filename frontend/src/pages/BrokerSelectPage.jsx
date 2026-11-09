@@ -487,7 +487,7 @@ export default function BrokerSelectPage() {
   const handleClearCredentials = async () => {
     const brokerDef = BROKERS.find((b) => b.id === selectedBroker);
     if (!brokerDef?.broker) return;
-    if (!window.confirm(`Clear saved credentials for ${brokerDef.name}? Your AlphaSync account and trading data will not be affected.`)) {
+    if (!window.confirm(`Clear saved credentials for ${brokerDef.name}? Your TradingBot account and trading data will not be affected.`)) {
       return;
     }
     try {
@@ -532,8 +532,8 @@ export default function BrokerSelectPage() {
         {/* Logo */}
         <div className="bp-logo">
           <img src="/white-logo.png" alt="TradingBot" className="bp-logo-icon" />
-          <span className="bp-logo-name">AlphaSync</span>
-          <span className="bp-logo-badge">α·SIM</span>
+          <span className="bp-logo-name">TradingBot</span>
+          <span className="bp-logo-badge">PRO</span>
         </div>
 
         {/* Hero copy */}
@@ -544,7 +544,7 @@ export default function BrokerSelectPage() {
           </h1>
           <p>
             Link your real broker account once for live NSE &amp; BSE prices.
-            All trades on AlphaSync stay simulated — your credentials are encrypted and never shared.
+            All trades on TradingBot stay simulated — your credentials are encrypted and never shared.
           </p>
         </div>
 
