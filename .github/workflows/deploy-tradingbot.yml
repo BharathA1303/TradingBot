@@ -263,6 +263,18 @@ jobs:
               --env-file .env \
               up -d --no-build
 
+            # Synchronize DB password (handles case where volume was initialized with fallback password)
+            echo "=== Syncing DB password ==="
+            for pgi in $(seq 1 15); do
+              if docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg pg_isready -U tradingbot 2>/dev/null; then
+                docker compose -p tradingbot -f docker-compose.tradingbot.yml exec -T tradingbot-pg \
+                  psql -U tradingbot -d tradingbot -c "ALTER USER tradingbot WITH PASSWORD '${TB_POSTGRES_PASSWORD}';" 2>/dev/null || true
+                docker restart tradingbot-backend >/dev/null 2>&1 || true
+                break
+              fi
+              sleep 2
+            done
+
             echo "=== Waiting for backend health (max 180s) ==="
             HEALTHY=0
             for i in $(seq 1 60); do
