@@ -1,6 +1,5 @@
 //api.js - Axios instance with auth token handling and rate limit backoff
 import axios from 'axios';
-import { auth } from '../config/firebase';
 import { clearUserSessionCookie } from '../utils/authSessionCookie';
 
 const api = axios.create({
@@ -41,16 +40,13 @@ api.interceptors.request.use(async (config) => {
     }
 
     try {
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            // getIdToken() auto-refreshes if token is expired
-            const token = await currentUser.getIdToken();
+        // JWT token stored in localStorage (replaces Firebase token)
+        const token = localStorage.getItem('tradingbot_token');
+        if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            // Also keep localStorage in sync for WebSocket connections
-            localStorage.setItem('alphasync_token', token);
         }
     } catch {
-        // If token refresh fails, let the request proceed without auth
+        // If token retrieval fails, let the request proceed without auth
         // The backend will return 401 and the app will redirect to login
     }
     return config;
@@ -70,24 +66,12 @@ api.interceptors.response.use(
 
         if (
             error.response?.status === 401 &&
-            !error.config?.url?.includes('/auth/sync') &&
+            !error.config?.url?.includes('/auth/login') &&
+            !error.config?.url?.includes('/auth/register') &&
             !error.config?.url?.includes('/auth/logout')
         ) {
-            // Firebase token might be revoked or user deleted server-side
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-                try {
-                    // Force token refresh — if Firebase rejects, sign out
-                    const newToken = await currentUser.getIdToken(true);
-                    error.config.headers.Authorization = `Bearer ${newToken}`;
-                    return api(error.config);
-                } catch {
-                    // Firebase session is truly invalid
-                    _forceLogout();
-                }
-            } else {
-                _forceLogout();
-            }
+            // JWT token is invalid or expired — force logout
+            _forceLogout();
         }
 
         return Promise.reject(error);
@@ -95,9 +79,8 @@ api.interceptors.response.use(
 );
 
 function _forceLogout() {
-    auth.signOut?.().catch(() => { });
-    localStorage.removeItem('alphasync_token');
-    localStorage.removeItem('alphasync_user');
+    localStorage.removeItem('tradingbot_token');
+    localStorage.removeItem('tradingbot_user');
     clearUserSessionCookie();
     if (window.location.pathname !== '/login') {
         window.location.href = '/login';

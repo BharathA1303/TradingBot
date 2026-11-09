@@ -149,7 +149,7 @@ export function useWebSocket() {
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
-        const token = localStorage.getItem('alphasync_token');
+        const token = localStorage.getItem('tradingbot_token');
         const clientId = `market_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const url = token
             ? `${protocol}//${host}/ws/${clientId}?token=${encodeURIComponent(token)}`

@@ -95,7 +95,7 @@ export default function BrokerCallbackPage() {
                 const brokerLabel = broker === 'aliceblue' ? 'Alice Blue'
                     : broker === 'zerodha' ? 'Zerodha' : 'Zebu';
                 toast.success(`${brokerLabel} connected successfully!`);
-                localStorage.setItem('alphasync_onboarded', '1');
+                localStorage.setItem('tradingbot_onboarded', '1');
                 localStorage.removeItem('zerodha_oauth_state');
                 useBrokerStore.getState().clearOAuthContext();
                 setTimeout(() => navigate('/dashboard'), 1200);

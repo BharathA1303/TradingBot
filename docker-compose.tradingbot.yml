@@ -1,0 +1,129 @@
+# ============================================================
+#  TradingBot — Docker Compose (AWS EC2)
+#  Server  : 3.7.55.85 (Amazon Linux 2023)
+#  Ports   : frontend=3003, backend=8003 (127.0.0.1-bound, nginx-only)
+#  Project : tradingbot   (isolated from hive-* stack on same server)
+#
+#  Isolation contract:
+#    - Own project ......... tradingbot
+#    - Own network ......... tradingbot-net
+#    - Own volumes ......... tradingbot-{pgdata,redis-data,uploads}
+#    - Own containers ...... tradingbot-{backend,frontend,pg,redis}
+#    - Postgres & Redis .... INTERNAL ONLY (no host port exposed)
+#    - Only 127.0.0.1:3003 (frontend) and 127.0.0.1:8003 (backend) published
+#
+#  Usage:
+#    docker compose -p tradingbot -f docker-compose.tradingbot.yml up -d --no-build
+# ============================================================
+
+name: tradingbot
+
+services:
+  # ── Backend API (FastAPI + PostgreSQL) ───────────────────────
+  tradingbot-backend:
+    image: tradingbot-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.tradingbot
+    container_name: tradingbot-backend
+    ports:
+      - "127.0.0.1:8003:8000"
+    volumes:
+      - tradingbot-uploads:/app/uploads
+    environment:
+      - APP_NAME=TradingBot
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://${TB_POSTGRES_USER:-tradingbot}:${TB_POSTGRES_PASSWORD:-tradingbot_secret}@tradingbot-pg:5432/${TB_POSTGRES_DB:-tradingbot}
+      - REDIS_URL=redis://tradingbot-redis:6379/0
+      - CORS_ORIGINS=["http://3.7.55.85","http://3.7.55.85:3003","http://localhost:3003"]
+      - CORS_ORIGIN_REGEX=https?://(localhost|127\.0\.0\.1):\d+
+      - JWT_SECRET_KEY=${TB_JWT_SECRET_KEY:?TB_JWT_SECRET_KEY must be set}
+      - BROKER_ENCRYPTION_KEY=${TB_BROKER_ENCRYPTION_KEY:?TB_BROKER_ENCRYPTION_KEY must be set}
+      - SIMULATION_MODE=true
+      - STRICT_ZEBU_MARKET_DATA=${STRICT_ZEBU_MARKET_DATA:-false}
+      - ZEBU_WS_URL=${ZEBU_WS_URL:-wss://go.mynt.in/NorenWSTP/}
+      - ZEBU_API_URL=${ZEBU_API_URL:-https://go.mynt.in/NorenWClientTP}
+      - ZEBU_API_SECRET=${ZEBU_API_SECRET:-}
+      - ZEBU_VENDOR_CODE=${ZEBU_VENDOR_CODE:-}
+      - ZEBU_REDIRECT_URI=${ZEBU_REDIRECT_URI:-http://3.7.55.85/broker/callback}
+      - ALICE_BLUE_REDIRECT_URI=${ALICE_BLUE_REDIRECT_URI:-http://3.7.55.85/broker/callback}
+      - ADMIN_EMAIL_ALLOWLIST=${ADMIN_EMAIL_ALLOWLIST:-["meganath1025@gmail.com"]}
+      - ROOT_ADMIN_EMAIL=${ROOT_ADMIN_EMAIL:-meganath1025@gmail.com}
+      - GROQ_API_KEY=${TB_GROQ_API_KEY:-}
+      - GROK_API_KEY=${TB_GROQ_API_KEY:-}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+      - SMTP_FROM_NAME=TradingBot
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 8s
+      retries: 15
+      start_period: 120s
+    depends_on:
+      tradingbot-pg:
+        condition: service_healthy
+      tradingbot-redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - tradingbot-net
+
+  # ── PostgreSQL (tradingbot-only, isolated) ───────────────────
+  tradingbot-pg:
+    image: postgres:16-alpine
+    container_name: tradingbot-pg
+    environment:
+      POSTGRES_DB: ${TB_POSTGRES_DB:-tradingbot}
+      POSTGRES_USER: ${TB_POSTGRES_USER:-tradingbot}
+      POSTGRES_PASSWORD: ${TB_POSTGRES_PASSWORD:-tradingbot_secret}
+    volumes:
+      - tradingbot-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TB_POSTGRES_USER:-tradingbot} -d ${TB_POSTGRES_DB:-tradingbot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    networks:
+      - tradingbot-net
+
+  # ── Redis (shared price cache) ───────────────────────────────
+  tradingbot-redis:
+    image: redis:7-alpine
+    container_name: tradingbot-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
+    volumes:
+      - tradingbot-redis-data:/data
+    restart: unless-stopped
+    networks:
+      - tradingbot-net
+
+  # ── Frontend (React → Nginx → proxies /api to backend) ──────
+  tradingbot-frontend:
+    image: tradingbot-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.tradingbot
+    container_name: tradingbot-frontend
+    ports:
+      - "3003:80"
+    depends_on:
+      tradingbot-backend:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - tradingbot-net
+
+volumes:
+  tradingbot-uploads:
+  tradingbot-pgdata:
+  tradingbot-redis-data:
+
+networks:
+  tradingbot-net:
+    driver: bridge
+

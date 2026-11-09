@@ -25,11 +25,11 @@ export default function ProtectedRoute({ children, requireOnboarding = false }) 
     // Fast path: if we have a cached user in localStorage, skip the spinner
     // entirely to prevent the flash. Firebase will validate in the background.
     const hasCachedUser = !user && initializing && (() => {
-        try { return !!localStorage.getItem('alphasync_user'); } catch { return false; }
+        try { return !!localStorage.getItem('tradingbot_user'); } catch { return false; }
     })();
 
     const cachedOnboarded = (() => {
-        try { return !!localStorage.getItem('alphasync_onboarded'); } catch { return false; }
+        try { return !!localStorage.getItem('tradingbot_onboarded'); } catch { return false; }
     })();
 
     useEffect(() => {
@@ -42,8 +42,8 @@ export default function ProtectedRoute({ children, requireOnboarding = false }) 
             const connected = await fetchStatus();
             if (cancelled) return;
             try {
-                if (connected) localStorage.setItem('alphasync_onboarded', '1');
-                else localStorage.removeItem('alphasync_onboarded');
+                if (connected) localStorage.setItem('tradingbot_onboarded', '1');
+                else localStorage.removeItem('tradingbot_onboarded');
             } catch {
                 // localStorage unavailable — server state (anyConnected) still governs
             }

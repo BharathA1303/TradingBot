@@ -1,4 +1,4 @@
-const COOKIE_NAME = 'alphasync_user_session';
+const COOKIE_NAME = 'tradingbot_user_session';
 const COOKIE_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 function _isSecureContext() {

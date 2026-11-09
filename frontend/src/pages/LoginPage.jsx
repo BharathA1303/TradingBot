@@ -1,4 +1,4 @@
-// LoginPage.jsx — Combined Login + Register
+// LoginPage.jsx — Combined Login + Register (JWT auth, no Firebase/Google)
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
@@ -26,7 +26,7 @@ function PwdStrength({ password }) {
 
 export default function LoginPage() {
   usePageMeta(
-    "α·SIM Demo Trading — Login | AlphaSync",
+    "TradingBot — Login | Demo Trading Platform",
     "Start paper trading for free. ₹10L virtual capital, live NSE/BSE data, zero risk."
   );
 
@@ -40,14 +40,11 @@ export default function LoginPage() {
   const [regPass, setRegPass]           = useState("");
   const [regAgree, setRegAgree]         = useState(false);
   const [regLoading, setRegLoading]     = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [showRegPass,   setShowRegPass]   = useState(false);
 
-  const loginWithEmail     = useAuthStore((s) => s.loginWithEmail);
-  const loginWithGoogle    = useAuthStore((s) => s.loginWithGoogle);
-  const registerWithEmail  = useAuthStore((s) => s.registerWithEmail);
-  const resendVerification = useAuthStore((s) => s.resendVerification);
+  const loginWithEmail    = useAuthStore((s) => s.loginWithEmail);
+  const registerWithEmail = useAuthStore((s) => s.registerWithEmail);
   const existingUser       = useAuthStore((s) => s.user);
   const navigate           = useNavigate();
   const [searchParams]     = useSearchParams();
@@ -66,8 +63,8 @@ export default function LoginPage() {
         }
         return;
       }
-      localStorage.setItem("alphasync_trading_mode", "demo");
-      localStorage.setItem("alphasync_onboarded", "1");
+      localStorage.setItem("tradingbot_trading_mode", "demo");
+      localStorage.setItem("tradingbot_onboarded", "1");
       navigate("/dashboard");
     } else {
       navigate("/account-status");
@@ -103,17 +100,12 @@ export default function LoginPage() {
       handleAuthSuccess(result?.user);
     } catch (err) {
       const code = err.code;
-      if (code === "auth/email-not-verified") {
-        try { await resendVerification(loginEmail, loginPass); toast.error("Email not verified. We sent a new verification link."); }
-        catch  { toast.error("Email not verified. Check your inbox."); }
-        navigate("/verify-email", { state: { email: loginEmail, password: loginPass } });
-        return;
-      } else if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
+      if (code === "auth/invalid-credential" || err?.response?.status === 401) {
         toast.error("Invalid email or password");
-      } else if (code === "auth/too-many-requests") {
+      } else if (err?.response?.status === 429) {
         toast.error("Too many attempts. Try again later.");
       } else {
-        toast.error(err.message || "Login failed");
+        toast.error(err?.response?.data?.detail || err.message || "Login failed");
       }
     } finally { setLoginLoading(false); }
   };
@@ -125,52 +117,27 @@ export default function LoginPage() {
     try {
       const fullName = (regFname + " " + regLname).trim();
       const result   = await registerWithEmail(regEmail, regPass, fullName, "");
-      if (result.needsVerification) {
-        navigate("/verify-email", { state: { email: regEmail, password: regPass } });
+      if (result.user && (result.user.account_status || "active") === "active") {
+        localStorage.setItem("tradingbot_trading_mode", "demo");
+        localStorage.setItem("tradingbot_onboarded", "1");
+        toast.success("Account created! Welcome to TradingBot.");
+        handleAuthSuccess(result.user);
+      } else if (result.user) {
+        toast("Registration successful. Your account is pending approval.");
+        navigate("/account-status");
       } else {
-        localStorage.setItem("alphasync_trading_mode", "demo");
-        localStorage.setItem("alphasync_onboarded", "1");
-        navigate("/dashboard");
+        toast("Registration successful. Check your email for next steps.");
+        navigate("/login");
       }
     } catch (err) {
-      const code = err.code;
-      if (code === "auth/email-already-in-use") toast.error("Email already registered. Try signing in.");
-      else if (code === "auth/weak-password")   toast.error("Password is too weak.");
-      else toast.error(err.message || "Registration failed");
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail || "";
+      if (status === 409 || detail.toLowerCase().includes("already")) {
+        toast.error("Email already registered. Try signing in.");
+      } else {
+        toast.error(detail || err.message || "Registration failed");
+      }
     } finally { setRegLoading(false); }
-  };
-
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      const result = await loginWithGoogle("login");
-      const email  = result?.user?.email || "selected Google account";
-      if ((result?.user?.account_status || "active") !== "active") {
-        toast(`Signed in as ${email}. Your account is under review.`);
-      } else {
-        toast.success(`Welcome back, ${email}!`);
-      }
-      handleAuthSuccess(result?.user);
-    } catch (err) {
-      if (err.response?.status === 404) { toast.error("Account not found. Please create an account first."); setTab("register"); return; }
-      if (err.code !== "auth/popup-closed-by-user") toast.error(err.message || "Google sign-in failed");
-    } finally { setGoogleLoading(false); }
-  };
-
-  const handleGoogleRegister = async () => {
-    setGoogleLoading(true);
-    try {
-      const result = await loginWithGoogle("register");
-      const email  = result?.user?.email || "selected Google account";
-      if ((result?.user?.account_status || "active") !== "active") {
-        toast.success(`Registered as ${email}. Account pending approval.`);
-      } else {
-        toast.success(result.isNew ? `Welcome to AlphaSync, ${email}!` : `Welcome back, ${email}!`);
-      }
-      handleAuthSuccess(result?.user);
-    } catch (err) {
-      if (err.code !== "auth/popup-closed-by-user") toast.error(err.message || "Google sign-up failed");
-    } finally { setGoogleLoading(false); }
   };
 
   const handleForgotPassword = async () => {
@@ -223,10 +190,10 @@ export default function LoginPage() {
           </svg>
         </div>
 
-        {/* ── Logo: white-logo.png + WHITE "AlphaSync" text ── */}
+        {/* ── Logo: white-logo.png + WHITE "TradingBot" text ── */}
         <div className="lp-logo">
-          <img src="/white-logo.png" alt="AlphaSync" className="lp-logo-icon" />
-          <span className="lp-logo-name">AlphaSync</span>
+          <img src="/white-logo.png" alt="TradingBot" className="lp-logo-icon" />
+          <span className="lp-logo-name">TradingBot</span>
           <span className="lp-logo-badge">{"α·SIM"}</span>
         </div>
 
@@ -375,15 +342,6 @@ export default function LoginPage() {
 
               </form>
 
-              <div className="lp-or">or continue with</div>
-
-              <button className="lp-btn-google" onClick={handleGoogleLogin}
-                      disabled={googleLoading} type="button">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                     alt="Google" width="20" height="20" />
-                {googleLoading ? "Signing in…" : "Continue with Google"}
-              </button>
-
               <p className="lp-terms">
                 By logging in, you agree to our{" "}
                 <a href="/terms">Terms &amp; Privacy Policy</a>
@@ -458,14 +416,6 @@ export default function LoginPage() {
 
               </form>
 
-              <div className="lp-or">or sign up with</div>
-
-              <button className="lp-btn-google" onClick={handleGoogleRegister}
-                      disabled={googleLoading} type="button">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                     alt="Google" width="20" height="20" />
-                {googleLoading ? "Signing up…" : "Sign up with Google"}
-              </button>
             </div>
 
           </div>

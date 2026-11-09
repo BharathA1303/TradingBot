@@ -1,8 +1,8 @@
 # ============================================================
-#  AlphaSync DEMO — Docker Compose (Contabo VPS)
-#  Domain: demo.alphasync.app
+#  TradingBot DEMO — Docker Compose (Contabo VPS)
+#  Domain: demo.TradingBot.app
 #  Ports: frontend=3002, backend=8002 (bound to 127.0.0.1, nginx-only)
-#  Container prefix: brokerdemo-*  (fully isolated from the alphasync-* and simalpha-* stacks)
+#  Container prefix: brokerdemo-*  (fully isolated from the TradingBot-* and simalpha-* stacks)
 # ============================================================
 #  Usage:
 #    docker compose -p brokerdemo -f docker-compose.demo.yml up -d --build
@@ -24,11 +24,11 @@ services:
       - brokerdemo-uploads:/app/uploads
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     environment:
-      - APP_NAME=AlphaSync-Demo
+      - APP_NAME=TradingBot-Demo
       - DEBUG=true
-      - DATABASE_URL=postgresql+asyncpg://${DEMO_POSTGRES_USER:-alphasync_demo}:${DEMO_POSTGRES_PASSWORD:-alphasync_demo}@demo-pg:5432/${DEMO_POSTGRES_DB:-alphasync_demo}
+      - DATABASE_URL=postgresql+asyncpg://${DEMO_POSTGRES_USER:-TradingBot_demo}:${DEMO_POSTGRES_PASSWORD:-TradingBot_demo}@demo-pg:5432/${DEMO_POSTGRES_DB:-TradingBot_demo}
       - REDIS_URL=redis://demo-redis:6379/0
-      - CORS_ORIGINS=["https://demo.alphasync.app","http://localhost:3002"]
+      - CORS_ORIGINS=["https://demo.TradingBot.app","http://localhost:3002"]
       - CORS_ORIGIN_REGEX=https?://(localhost|127\.0\.0\.1):\d+
       - BROKER_ENCRYPTION_KEY=${BROKER_ENCRYPTION_KEY:?BROKER_ENCRYPTION_KEY must be set via GitHub Actions secret}
       - SIMULATION_MODE=true
@@ -37,9 +37,9 @@ services:
       - ZEBU_API_URL=${ZEBU_API_URL:-https://go.mynt.in/NorenWClientTP}
       - ZEBU_API_SECRET=${ZEBU_API_SECRET:-}
       - ZEBU_VENDOR_CODE=${ZEBU_VENDOR_CODE:-}
-      - ZEBU_REDIRECT_URI=${ZEBU_REDIRECT_URI:-https://demo.alphasync.app/broker/callback}
+      - ZEBU_REDIRECT_URI=${ZEBU_REDIRECT_URI:-https://demo.TradingBot.app/broker/callback}
       - ZEBU_OAUTH_CLIENT_ID=${ZEBU_OAUTH_CLIENT_ID:-}
-      - ALICE_BLUE_REDIRECT_URI=${ALICE_BLUE_REDIRECT_URI:-https://demo.alphasync.app/broker/callback}
+      - ALICE_BLUE_REDIRECT_URI=${ALICE_BLUE_REDIRECT_URI:-https://demo.TradingBot.app/broker/callback}
       - FIREBASE_CREDENTIALS_JSON=${FIREBASE_CREDENTIALS_JSON:-}
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
       - ADMIN_EMAIL_ALLOWLIST=${ADMIN_EMAIL_ALLOWLIST:-["ashok.j2346@gmail.com"]}
@@ -70,14 +70,14 @@ services:
     image: postgres:16-alpine
     container_name: brokerdemo-pg
     environment:
-      POSTGRES_DB: ${DEMO_POSTGRES_DB:-alphasync_demo}
-      POSTGRES_USER: ${DEMO_POSTGRES_USER:-alphasync_demo}
-      POSTGRES_PASSWORD: ${DEMO_POSTGRES_PASSWORD:-alphasync_demo}
+      POSTGRES_DB: ${DEMO_POSTGRES_DB:-TradingBot_demo}
+      POSTGRES_USER: ${DEMO_POSTGRES_USER:-TradingBot_demo}
+      POSTGRES_PASSWORD: ${DEMO_POSTGRES_PASSWORD:-TradingBot_demo}
     volumes:
       - brokerdemo-pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DEMO_POSTGRES_USER:-alphasync_demo} -d ${DEMO_POSTGRES_DB:-alphasync_demo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DEMO_POSTGRES_USER:-TradingBot_demo} -d ${DEMO_POSTGRES_DB:-TradingBot_demo}"]
       interval: 10s
       timeout: 5s
       retries: 8

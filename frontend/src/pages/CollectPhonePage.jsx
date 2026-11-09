@@ -35,8 +35,8 @@ export default function CollectPhonePage() {
 
     if (role !== 'admin' && user?.phone) {
         if (isActive) {
-            localStorage.setItem('alphasync_trading_mode', 'demo');
-            localStorage.setItem('alphasync_onboarded', '1');
+            localStorage.setItem('tradingbot_trading_mode', 'demo');
+            localStorage.setItem('tradingbot_onboarded', '1');
         }
         return <Navigate to={nextPath} replace />;
     }
@@ -54,8 +54,8 @@ export default function CollectPhonePage() {
         try {
             await submitPhone(digits);
             if (isActive && role !== 'admin') {
-                localStorage.setItem('alphasync_trading_mode', 'demo');
-                localStorage.setItem('alphasync_onboarded', '1');
+                localStorage.setItem('tradingbot_trading_mode', 'demo');
+                localStorage.setItem('tradingbot_onboarded', '1');
             }
             navigate(nextPath, { replace: true });
         } catch (err) {

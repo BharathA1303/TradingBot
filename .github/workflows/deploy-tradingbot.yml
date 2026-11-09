@@ -1,0 +1,329 @@
+name: Deploy TradingBot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_db_migration:
+        description: "Load SQL dump into live DB (REPLACES current data; backup taken first)"
+        type: boolean
+        default: false
+      force_rebuild:
+        description: "Force rebuild both images even if no changes detected"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write   # required to push images to GHCR
+
+concurrency:
+  group: deploy-tradingbot-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/tradingbot-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/tradingbot-frontend
+
+# ── Job 0: Detect changes ─────────────────────────────────────────────────────
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before || 'HEAD~1' }}
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+# ── Job 1a: Build & push backend ──────────────────────────────────────────────
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || github.event.inputs.force_rebuild == 'true'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.tradingbot
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha,scope=tradingbot-backend
+          cache-to: type=gha,mode=max,scope=tradingbot-backend
+
+# ── Job 1b: Build & push frontend (parallel with backend) ─────────────────────
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_rebuild == 'true'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend assets
+        working-directory: frontend
+        # No Firebase env vars — JWT auth is pure JS, no build-time secrets needed
+        env:
+          VITE_API_URL: /api
+        run: |
+          npm ci --prefer-offline --no-audit --no-fund
+          npm run build
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.tradingbot
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha,scope=tradingbot-frontend
+          cache-to: type=gha,mode=max,scope=tradingbot-frontend
+
+# ── Job 2: Deploy to AWS ───────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    needs: [changes, build-backend, build-frontend]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
+    timeout-minutes: 20
+    env:
+      BACKEND_IMAGE:  ${{ format('ghcr.io/{0}/tradingbot-backend', github.repository_owner) }}
+      FRONTEND_IMAGE: ${{ format('ghcr.io/{0}/tradingbot-frontend', github.repository_owner) }}
+      GH_TOKEN:   ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
+      GH_ACTOR:   ${{ github.repository_owner }}
+      RUN_DB_MIGRATION: ${{ github.event.inputs.run_db_migration }}
+      # TradingBot secrets (all prefixed TB_ to avoid collision with hive-* secrets)
+      TB_JWT_SECRET_KEY:        ${{ secrets.TB_JWT_SECRET_KEY }}
+      TB_BROKER_ENCRYPTION_KEY: ${{ secrets.TB_BROKER_ENCRYPTION_KEY }}
+      TB_POSTGRES_PASSWORD:     ${{ secrets.TB_POSTGRES_PASSWORD }}
+      TB_GROQ_API_KEY:          ${{ secrets.TB_GROQ_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Start SSH agent (used for scp uploads) ─────────────────────────────
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.TB_SERVER_SSH_KEY }}
+
+      # ── Upload config files to server ──────────────────────────────────────
+      - name: Upload deploy assets to server
+        env:
+          SERVER_HOST: ${{ secrets.TB_SERVER_HOST }}
+          SERVER_USER: ${{ secrets.TB_SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          retry() {
+            local attempts="$1" delay="$2"; shift 2
+            local n=1
+            until "$@"; do
+              [ "$n" -ge "$attempts" ] && { echo "ERROR: failed after $attempts attempts: $*"; return 1; }
+              echo "Attempt $n/$attempts failed — retrying in ${delay}s..."
+              sleep "$delay"; n=$((n+1))
+            done
+          }
+
+          SSH_OPTS=(
+            -o StrictHostKeyChecking=accept-new
+            -o UserKnownHostsFile=$HOME/.ssh/known_hosts
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=6
+            -o ConnectTimeout=20
+            -P 22
+          )
+
+          retry 4 5 ssh "${SSH_OPTS[@]}" "${SERVER_USER}@${SERVER_HOST}" \
+            "sudo mkdir -p /opt/tradingbot/deploy/nginx && sudo chown -R ${SERVER_USER}:${SERVER_USER} /opt/tradingbot"
+
+          retry 4 5 scp "${SSH_OPTS[@]}" \
+            docker-compose.tradingbot.yml \
+            "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/docker-compose.tradingbot.yml"
+
+          retry 4 5 scp "${SSH_OPTS[@]}" \
+            deploy/nginx/tradingbot.conf \
+            "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/deploy/nginx/tradingbot.conf"
+
+          # Upload DB migration assets only when explicitly triggered
+          if [ "${RUN_DB_MIGRATION}" = "true" ]; then
+            echo "run_db_migration=true — uploading dump + migration script"
+            retry 4 5 scp "${SSH_OPTS[@]}" scripts/db_migrate.sh \
+              "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/scripts/db_migrate.sh"
+            retry 4 5 scp "${SSH_OPTS[@]}" alphasync_demo.sql \
+              "${SERVER_USER}@${SERVER_HOST}:/opt/tradingbot/tradingbot.sql"
+          else
+            echo "run_db_migration not set — skipping DB dump (data untouched)"
+          fi
+
+      # ── Deploy on server ───────────────────────────────────────────────────
+      - name: Deploy on AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.TB_SERVER_HOST }}
+          username: ${{ secrets.TB_SERVER_USER }}
+          key:      ${{ secrets.TB_SERVER_SSH_KEY }}
+          port:     22
+          command_timeout: 15m
+          envs: BACKEND_IMAGE,FRONTEND_IMAGE,GH_TOKEN,GH_ACTOR,RUN_DB_MIGRATION,TB_JWT_SECRET_KEY,TB_BROKER_ENCRYPTION_KEY,TB_POSTGRES_PASSWORD,TB_GROQ_API_KEY
+          script: |
+            set -eo pipefail
+            DEPLOY_DIR="/opt/tradingbot"
+
+            retry() {
+              local attempts="$1" delay="$2"; shift 2
+              local n=1
+              until "$@"; do
+                [ "$n" -ge "$attempts" ] && { echo "ERROR: failed after $attempts attempts: $*"; return 1; }
+                echo "Attempt $n/$attempts failed — retrying in ${delay}s..."
+                sleep "$delay"; n=$((n+1))
+              done
+            }
+
+            echo "=== Preparing deploy directory ==="
+            mkdir -p "${DEPLOY_DIR}"
+            cd "${DEPLOY_DIR}"
+
+            # Write .env from secrets (never committed to repo)
+            cat > "${DEPLOY_DIR}/.env" <<ENVEOF
+            TB_JWT_SECRET_KEY=${TB_JWT_SECRET_KEY}
+            TB_BROKER_ENCRYPTION_KEY=${TB_BROKER_ENCRYPTION_KEY}
+            TB_POSTGRES_PASSWORD=${TB_POSTGRES_PASSWORD}
+            TB_POSTGRES_USER=tradingbot
+            TB_POSTGRES_DB=tradingbot
+            TB_GROQ_API_KEY=${TB_GROQ_API_KEY}
+            ENVEOF
+            chmod 600 "${DEPLOY_DIR}/.env"
+
+            echo "=== Logging in to GHCR ==="
+            retry 4 8 bash -c 'echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin'
+
+            echo "=== Pulling pre-built images (only changed layers transferred) ==="
+            retry 4 10 docker pull "${BACKEND_IMAGE}:latest"
+            retry 4 10 docker pull "${FRONTEND_IMAGE}:latest"
+
+            # Retag to local names expected by docker-compose.tradingbot.yml
+            docker tag "${BACKEND_IMAGE}:latest" tradingbot-backend:latest
+            docker tag "${FRONTEND_IMAGE}:latest" tradingbot-frontend:latest
+
+            echo "=== Verifying uploaded files ==="
+            ls -la docker-compose.tradingbot.yml deploy/nginx/tradingbot.conf || true
+
+            echo "=== Updating ONLY the tradingbot stack (hive-* stacks untouched) ==="
+            # SAFETY: scoped strictly to project 'tradingbot'.
+            # NO --remove-orphans to avoid touching other stacks.
+            docker compose -p tradingbot \
+              -f docker-compose.tradingbot.yml \
+              --env-file .env \
+              up -d --no-build
+
+            echo "=== Waiting for backend health (max 180s) ==="
+            HEALTHY=0
+            for i in $(seq 1 60); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
+              if [ "${STATUS}" = "healthy" ]; then
+                echo "Backend healthy after $((i * 3))s!"
+                HEALTHY=1; break
+              fi
+              STATE=$(docker inspect --format='{{.State.Status}}' tradingbot-backend 2>/dev/null || echo "unknown")
+              if [ "${STATE}" = "exited" ] || [ "${STATE}" = "dead" ]; then
+                echo "ERROR: Backend crashed. Last 100 log lines:"
+                docker logs tradingbot-backend --tail 100 2>&1
+                exit 1
+              fi
+              echo "  waiting... ($((i * 3))s, status=${STATUS} state=${STATE})"
+              sleep 3
+            done
+
+            if [ "${HEALTHY}" -eq 0 ]; then
+              echo "ERROR: Backend did not become healthy in 180s. Last 100 log lines:"
+              docker logs tradingbot-backend --tail 100 2>&1
+              exit 1
+            fi
+
+            # ── Optional DB migration ───────────────────────────────────────
+            if [ "${RUN_DB_MIGRATION}" = "true" ]; then
+              echo "=== Running DB migration ==="
+              if [ ! -f scripts/db_migrate.sh ] || [ ! -f tradingbot.sql ]; then
+                echo "ERROR: migration assets missing on server."
+                exit 1
+              fi
+              FORCE_YES=1 bash scripts/db_migrate.sh
+              echo "=== Restarting backend to pick up fresh data ==="
+              docker restart tradingbot-backend >/dev/null 2>&1 || true
+            fi
+
+            echo "=== Installing Nginx config ==="
+            sudo cp deploy/nginx/tradingbot.conf /etc/nginx/conf.d/tradingbot.conf
+
+            if sudo nginx -t 2>&1; then
+              sudo systemctl reload nginx
+              echo "Nginx reloaded!"
+            else
+              echo "WARNING: Nginx config test failed — skipping reload"
+            fi
+
+            echo ""
+            echo "=== Final status ==="
+            docker compose -p tradingbot -f docker-compose.tradingbot.yml ps
+            docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
+
+            # Clean up dangling images in background
+            docker image prune -f &>/dev/null &
+
+            echo "Deploy complete! http://3.7.55.85"
+

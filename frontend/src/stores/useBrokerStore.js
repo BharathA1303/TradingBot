@@ -284,7 +284,7 @@ export const useBrokerStore = create((set, get) => ({
             set({ loading: false });
             get()._refreshAnyConnected();
             try {
-                localStorage.removeItem('alphasync_onboarded');
+                localStorage.removeItem('tradingbot_onboarded');
             } catch {
                 // ignore
             }

@@ -240,11 +240,11 @@ export default function Sidebar({ collapsed, onToggle }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center w-full flex-1 min-h-0"
-                title="AlphaSync"
+                title="TradingBot"
               >
                 <img
                   src={collapsedLogoSrc}
-                  alt="AlphaSync"
+                  alt="TradingBot"
                   draggable={false}
                   className="h-12 w-12 max-w-[52px] max-h-[52px] object-contain flex-shrink-0"
                 />
@@ -271,7 +271,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 >
                   <img
                     src="/logo.svg"
-                    alt="AlphaSync"
+                    alt="TradingBot"
                     className="h-12 max-w-[170px] object-contain object-left transition-all duration-300 logo-light-adapt"
                   />
                 </a>

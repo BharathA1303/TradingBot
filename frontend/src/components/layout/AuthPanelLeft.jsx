@@ -18,7 +18,7 @@ export default function AuthPanelLeft({ children }) {
       <div className="relative w-full h-full flex flex-col overflow-hidden">
         <div className="relative z-10 px-9 pt-9 flex-shrink-0">
           <a href="https://www.alphasync.app/">
-            <img src="/logo.svg" alt="AlphaSync" className="h-16 object-contain logo-dark-bg" />
+            <img src="/logo.svg" alt="TradingBot" className="h-16 object-contain logo-dark-bg" />
           </a>
         </div>
 

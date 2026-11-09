@@ -4,20 +4,23 @@ import os
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AlphaSync"
+    APP_NAME: str = "TradingBot"
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
 
     # Database (PostgreSQL — required for production)
     DATABASE_URL: str = (
-        "postgresql+asyncpg://alphasync:alphasync@localhost:5432/alphasync"
+        "postgresql+asyncpg://tradingbot:tradingbot@localhost:5432/tradingbot"
     )
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_RECYCLE: int = 3600
     DB_POOL_PRE_PING: bool = True
 
-    # Firebase Authentication
+    # JWT Authentication (replaces Firebase)
+    JWT_SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY", "tradingbot-change-this-secret-key-in-production")
+
+    # Firebase Authentication (kept for reference but not used)
     FIREBASE_CREDENTIALS_JSON: str = ""  # JSON string of service account key
     FIREBASE_CREDENTIALS_PATH: str = ""  # Path to service account JSON file
 
@@ -97,7 +100,7 @@ class Settings(BaseSettings):
     # Broker Token Encryption (AES-256-GCM)
     # Generate with: python -c "import secrets; print(secrets.token_urlsafe(48))"
     BROKER_ENCRYPTION_KEY: str = (
-        "alphasync-default-broker-key-change-in-production-1234"
+        "tradingbot-default-broker-key-change-in-production-1234"
     )
 
     # ── New Architecture Settings ───────────────────────────────────
@@ -130,7 +133,7 @@ class Settings(BaseSettings):
 
     # ── Admin Panel ──────────────────────────────────────────────────
     ADMIN_SESSION_EXPIRY_MINUTES: int = 30
-    TOTP_ISSUER_NAME: str = "AlphaSync Admin"
+    TOTP_ISSUER_NAME: str = "TradingBot Admin"
     # Temporary bootstrap admin allowlist. Override in env for production.
     ADMIN_EMAIL_ALLOWLIST: list[str] = ["meganath1025@gmail.com"]
     # Root admin email — has unrestricted access and can create/manage other admins.
@@ -150,7 +153,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = "ashok.j2346@gmail.com"
     SMTP_PASSWORD: str = "qcneuqilbxhnppau"
     SMTP_FROM_EMAIL: str = "ashok.j2346@gmail.com"
-    SMTP_FROM_NAME: str = "AlphaSync"
+    SMTP_FROM_NAME: str = "TradingBot"
     SMTP_USE_TLS: bool = False
 
     # ── AI Mentor (Grok API) ─────────────────────────────────────

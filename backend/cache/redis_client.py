@@ -32,7 +32,7 @@ import redis.asyncio as aioredis
 logger = logging.getLogger(__name__)
 
 # ── Key prefix ──────────────────────────────────────────────────────
-PREFIX = "alphasync"
+PREFIX = "TradingBot"
 
 # ── TTLs ────────────────────────────────────────────────────────────
 PRICE_TTL = 120  # seconds — price keys auto-expire

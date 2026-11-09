@@ -405,7 +405,7 @@ export default function BrokerSelectPage() {
     (async () => {
       const connected = await fetchStatus();
       if (connected) {
-        localStorage.setItem("alphasync_onboarded", "1");
+        localStorage.setItem("tradingbot_onboarded", "1");
         navigate("/dashboard", { replace: true });
       }
     })();
@@ -502,7 +502,7 @@ export default function BrokerSelectPage() {
 
   const handleConnected = () => {
     setAddBrokerModal(null);
-    localStorage.setItem("alphasync_onboarded", "1");
+    localStorage.setItem("tradingbot_onboarded", "1");
     setIsTransitioning(true);
     setTimeout(() => navigate("/dashboard"), 400);
   };
@@ -531,7 +531,7 @@ export default function BrokerSelectPage() {
 
         {/* Logo */}
         <div className="bp-logo">
-          <img src="/white-logo.png" alt="AlphaSync" className="bp-logo-icon" />
+          <img src="/white-logo.png" alt="TradingBot" className="bp-logo-icon" />
           <span className="bp-logo-name">AlphaSync</span>
           <span className="bp-logo-badge">α·SIM</span>
         </div>

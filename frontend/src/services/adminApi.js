@@ -1,6 +1,6 @@
 import api from './api';
 
-const ADMIN_SESSION_STORAGE_KEY = 'alphasync_admin_session';
+const ADMIN_SESSION_STORAGE_KEY = 'tradingbot_admin_session';
 
 export function getAdminSessionToken() {
     try {

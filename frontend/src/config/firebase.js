@@ -1,69 +1,92 @@
 /**
- * Firebase client configuration for AlphaSync.
- *
- * Uses real Firebase authentication with hardcoded project credentials.
- * Env vars (VITE_FIREBASE_*) override the defaults if set.
+ * TradingBot Auth — Simple JWT (no Firebase)
+ * Drop-in replacement for the Firebase config module.
+ * All functions work with our backend JWT API.
  */
-import { initializeApp } from 'firebase/app';
-import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup as fbSignInWithPopup,
-    signInWithEmailAndPassword as fbSignInWithEmail,
-    createUserWithEmailAndPassword as fbCreateUser,
-    signOut as fbSignOut,
-    onAuthStateChanged as fbOnAuthStateChanged,
-    sendPasswordResetEmail as fbSendPasswordReset,
-    sendEmailVerification as fbSendEmailVerification,
-    updateProfile as fbUpdateProfile,
-} from 'firebase/auth';
 
-// ── Firebase credentials (hardcoded defaults, overridable via env) ────────────
-
-const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyC2ZfxSeDvNK1yb2trj7OM8O-y18akFAig',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'alphasync--demo.firebaseapp.com',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'alphasync--demo',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'alphasync--demo.firebasestorage.app',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1000023655271',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1000023655271:web:fc4d94df2f90f6a859e5c2',
-};
-
-// Always true now since we have hardcoded defaults
 export const DEMO_MODE = false;
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Initialize Firebase
-// ══════════════════════════════════════════════════════════════════════════════
+// Minimal auth object that mimics Firebase Auth's interface
+let _currentUser = null;
+let _authStateCallbacks = [];
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
-googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-// ── Re-export real Firebase functions directly ────────────────────────────────
-
-const signInWithPopup = fbSignInWithPopup;
-const signInWithEmailAndPassword = fbSignInWithEmail;
-const createUserWithEmailAndPassword = fbCreateUser;
-const signOut = fbSignOut;
-const sendPasswordResetEmail = fbSendPasswordReset;
-const sendEmailVerification = fbSendEmailVerification;
-const updateProfile = fbUpdateProfile;
-const onAuthStateChanged = fbOnAuthStateChanged;
-
-export {
-    auth,
-    googleProvider,
-    signInWithPopup,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-    sendEmailVerification,
-    updateProfile,
+export const auth = {
+    get currentUser() { return _currentUser; },
+    signOut: () => signOut(null),
 };
-export default app;
+
+export function setCurrentUser(user) {
+    _currentUser = user;
+    _authStateCallbacks.forEach(cb => cb(user));
+}
+
+// Fake Firebase-compatible exports (unused but imported by other files)
+export const googleProvider = null;
+
+export function signInWithPopup() {
+    return Promise.reject(new Error('Google sign-in is disabled'));
+}
+
+export async function signInWithEmailAndPassword(_, email, password) {
+    const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const error = new Error(err.detail || 'Login failed');
+        error.code = res.status === 401 ? 'auth/invalid-credential' : 'auth/unknown';
+        throw error;
+    }
+    const data = await res.json();
+    const token = data.token;
+    localStorage.setItem('tradingbot_token', token);
+    const user = {
+        uid: data.user?.id,
+        email: data.user?.email,
+        displayName: data.user?.full_name,
+        emailVerified: true,
+        getIdToken: async () => localStorage.getItem('tradingbot_token') || '',
+        providerData: [{ providerId: 'password' }],
+    };
+    setCurrentUser(user);
+    return { user, backendUser: data.user };
+}
+
+export async function createUserWithEmailAndPassword(_, email, password) {
+    // Registration handled separately via /api/auth/register
+    return { user: null };
+}
+
+export function signOut(_) {
+    localStorage.removeItem('tradingbot_token');
+    localStorage.removeItem('tradingbot_user');
+    setCurrentUser(null);
+    return Promise.resolve();
+}
+
+export function onAuthStateChanged(_, callback) {
+    _authStateCallbacks.push(callback);
+    // Fire immediately with current state
+    callback(_currentUser);
+    // Return unsubscribe function
+    return () => {
+        _authStateCallbacks = _authStateCallbacks.filter(cb => cb !== callback);
+    };
+}
+
+export function sendPasswordResetEmail() {
+    return Promise.resolve();
+}
+
+export function sendEmailVerification() {
+    return Promise.resolve();
+}
+
+export function updateProfile(user, profile) {
+    if (user && profile.displayName) user.displayName = profile.displayName;
+    return Promise.resolve();
+}
+
+export default { currentUser: null };

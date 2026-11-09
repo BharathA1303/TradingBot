@@ -1340,7 +1340,7 @@ export default function SettingsPage() {
                   >
                     <button
                       onClick={() => {
-                        const keep = ['alphasync_token', 'alphasync_user'];
+                        const keep = ['tradingbot_token', 'tradingbot_user'];
                         const keys = Object.keys(localStorage).filter((k) => k.startsWith('alphasync_') && !keep.includes(k));
                         keys.forEach((k) => localStorage.removeItem(k));
                         toast.success(`Cleared ${keys.length} cached items`);

@@ -1474,7 +1474,7 @@ export default function AdminPanelPage() {
             const response = await adminApi.downloadOverallUsersExcel();
             const filename = resolveFilenameFromDisposition(
                 response?.headers?.['content-disposition'],
-                'alphasync_users_overall.xlsx'
+                'tradingbot_users_overall.xlsx'
             );
             triggerBlobDownload(response.data, filename);
             toast.success('Overall users Excel downloaded');
@@ -1496,7 +1496,7 @@ export default function AdminPanelPage() {
             });
             const filename = resolveFilenameFromDisposition(
                 response?.headers?.['content-disposition'],
-                'alphasync_users_applied.xlsx'
+                'tradingbot_users_applied.xlsx'
             );
             triggerBlobDownload(response.data, filename);
             toast.success('Applied users Excel downloaded');

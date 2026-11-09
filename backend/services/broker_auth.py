@@ -1203,7 +1203,7 @@ class BrokerAuthService:
                 "factor2": "",
                 "vc": vc,
                 "appkey": appkey,
-                "imei": "alphasync",
+                "imei": "TradingBot",
                 "source": "API",
             }
 
@@ -1413,7 +1413,7 @@ class BrokerAuthService:
             "factor2": dob_or_pan,
             "vc": vendor_code_to_use,
             "appkey": appkey,
-            "imei": "alphasync",
+            "imei": "TradingBot",
             "source": "API",
         }
         return await self._zebu_quickauth_call(payload)
@@ -1587,7 +1587,7 @@ class BrokerAuthService:
             "factor2": totp,
             "vc": vc,
             "appkey": appkey,
-            "imei": "alphasync",
+            "imei": "TradingBot",
             "source": "API",
         }
 
