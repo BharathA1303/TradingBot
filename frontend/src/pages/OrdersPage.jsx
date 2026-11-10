@@ -12,6 +12,11 @@ import {
     AlertCircle,
     Clock3,
     CheckCircle2,
+    TrendingUp,
+    TrendingDown,
+    ClipboardList,
+    Layers,
+    SlidersHorizontal,
 } from 'lucide-react';
 import api from '../services/api';
 import { formatCurrency, cleanSymbol, formatQuantity, formatPercent, formatDate } from '../utils/formatters';
@@ -790,132 +795,189 @@ export default function OrdersPage() {
     const EmptyIcon = emptyStateMessage.icon;
 
     return (
-        <div className="p-4 lg:p-6 space-y-5 animate-fade-in">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <h1 className="text-2xl font-display font-semibold text-heading">Orders</h1>
+        <div className="neu-orders-page min-h-screen p-4 lg:p-6 space-y-5 animate-fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl neu-terminal-pill-btn flex items-center justify-center text-emerald-500 shadow-sm">
+                        <ClipboardList className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-display font-extrabold text-heading tracking-tight">Orders</h1>
+                        <p className="text-xs text-slate-400 font-medium">Real-time orderbook, execution status &amp; trade history</p>
+                    </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={exportCsv}
-                        className="inline-flex items-center gap-2 rounded-lg border border-edge/10 bg-surface-900/40 px-3 py-2 text-xs font-semibold text-heading transition-colors hover:border-edge/20"
+                        className="neu-terminal-pill-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-heading transition-all"
                     >
-                        <Download className="h-3.5 w-3.5" />
+                        <Download className="h-3.5 w-3.5 text-emerald-500" />
                         Export
                     </button>
                     <button
                         type="button"
                         onClick={loadOrders}
                         disabled={isRefreshing}
-                        className="inline-flex items-center gap-2 rounded-lg border border-edge/10 bg-surface-900/40 px-3 py-2 text-xs font-semibold text-heading transition-colors hover:border-edge/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="neu-terminal-pill-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-heading transition-all disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+                        <RefreshCw className={cn('h-3.5 w-3.5 text-blue-500', isRefreshing && 'animate-spin')} />
                         Refresh
                     </button>
-                    <span className="text-[11px] text-gray-500">
-                        {lastUpdatedAt
-                            ? `Updated ${lastUpdatedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
-                            : '—'}
-                    </span>
+                    {lastUpdatedAt && (
+                        <div className="neu-dash-inset px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-slate-400 hidden sm:inline-flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Updated {lastUpdatedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
-                <div className="glass-card p-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Total Orders</p>
-                    <p className="mt-1 text-xl font-semibold text-heading tabular-nums">{formatQuantity(summary.totalOrders)}</p>
-                    <p className="mt-1 text-[11px] text-gray-500">Today</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3.5">
+                <div className="neu-orders-kpi p-4 relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Total Orders</p>
+                        <div className="w-7 h-7 rounded-lg neu-badge-pill flex items-center justify-center text-blue-500">
+                            <Layers className="w-3.5 h-3.5" />
+                        </div>
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-heading font-price tabular-nums">{formatQuantity(summary.totalOrders)}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">Today</p>
                 </div>
-                <div className="glass-card p-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Filled</p>
-                    <p className="mt-1 text-xl font-semibold text-heading tabular-nums">{formatQuantity(summary.filled)}</p>
-                    <p className="mt-1 text-[11px] text-gray-500">{formatPercent(summary.fillRate, 0, false)} fill rate</p>
+
+                <div className="neu-orders-kpi p-4 relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Filled</p>
+                        <div className="w-7 h-7 rounded-lg neu-badge-pill flex items-center justify-center text-emerald-500">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                        </div>
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-emerald-500 font-price tabular-nums">{formatQuantity(summary.filled)}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">{formatPercent(summary.fillRate, 0, false)} fill rate</p>
                 </div>
-                <div className="glass-card p-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Pending</p>
-                    <p className="mt-1 text-xl font-semibold text-heading tabular-nums">{formatQuantity(summary.pending)}</p>
-                    <p className="mt-1 text-[11px] text-gray-500">{summary.pending > 0 ? `${summary.pending} open orders` : 'No open orders'}</p>
+
+                <div className="neu-orders-kpi p-4 relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Pending</p>
+                        <div className="w-7 h-7 rounded-lg neu-badge-pill flex items-center justify-center text-amber-500">
+                            <Clock3 className="w-3.5 h-3.5" />
+                        </div>
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-amber-500 font-price tabular-nums">{formatQuantity(summary.pending)}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">{summary.pending > 0 ? `${summary.pending} open orders` : 'No open orders'}</p>
                 </div>
-                <div className="glass-card p-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Rejected</p>
-                    <p className={cn('mt-1 text-xl font-semibold tabular-nums', summary.rejected > 0 ? 'text-loss' : 'text-heading')}>
+
+                <div className="neu-orders-kpi p-4 relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Rejected</p>
+                        <div className={cn("w-7 h-7 rounded-lg neu-badge-pill flex items-center justify-center", summary.rejected > 0 ? "text-rose-500" : "text-slate-400")}>
+                            <AlertCircle className="w-3.5 h-3.5" />
+                        </div>
+                    </div>
+                    <p className={cn('mt-2 text-2xl font-black font-price tabular-nums', summary.rejected > 0 ? 'text-rose-500' : 'text-heading')}>
                         {formatQuantity(summary.rejected)}
                     </p>
-                    <p className="mt-1 text-[11px] text-gray-500">{summary.rejected > 0 ? 'Needs review' : 'No rejections'}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">{summary.rejected > 0 ? 'Needs review' : 'No rejections'}</p>
                 </div>
-                <div className="glass-card p-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Realised P&amp;L</p>
-                    <p className={cn('mt-1 text-xl font-semibold tabular-nums', summary.realizedPnl >= 0 ? 'text-profit' : 'text-loss')}>
+
+                <div className="neu-orders-kpi p-4 relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Realised P&amp;L</p>
+                        <div className={cn("w-7 h-7 rounded-lg neu-badge-pill flex items-center justify-center", summary.realizedPnl >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                            {summary.realizedPnl >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                        </div>
+                    </div>
+                    <p className={cn('mt-2 text-2xl font-black font-price tabular-nums', summary.realizedPnl > 0 ? 'text-emerald-500' : summary.realizedPnl < 0 ? 'text-rose-500' : 'text-heading')}>
                         {summary.realizedPnl > 0 ? '+' : ''}{formatCurrency(summary.realizedPnl)}
                     </p>
-                    <p className="mt-1 text-[11px] text-gray-500">Gross turnover {formatCurrency(summary.grossTurnover)}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">Gross turnover {formatCurrency(summary.grossTurnover)}</p>
                 </div>
             </div>
 
-            <div className="glass-card p-3 lg:p-4 space-y-3">
+            <div className="neu-dash-card p-3.5 lg:p-4 space-y-3.5">
                 <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {ORDER_TABS.map((tab) => (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                onClick={() => setActiveTab(tab.key)}
-                                className={cn(
-                                    'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                                    activeTab === tab.key
-                                        ? 'border-primary-500/30 bg-primary-500/15 text-primary-600 shadow-sm'
-                                        : 'border-edge/10 bg-surface-900/40 text-gray-500 hover:border-edge/20 hover:text-heading'
-                                )}
-                            >
-                                {tab.label}
-                                <span className="ml-1.5 text-[10px] font-mono opacity-80">
-                                    {tab.key === 'pending' ? tabCounts.pending : tab.key === 'filled' ? tabCounts.filled : tabCounts.all}
-                                </span>
-                            </button>
-                        ))}
+                    {/* Order Tabs */}
+                    <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1 overflow-x-auto no-scrollbar">
+                        {ORDER_TABS.map((tab) => {
+                            const count = tab.key === 'pending' ? tabCounts.pending : tab.key === 'filled' ? tabCounts.filled : tabCounts.all;
+                            const isActive = activeTab === tab.key;
+                            return (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={cn(
+                                        'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap',
+                                        isActive
+                                            ? 'neu-btn-active scale-102 shadow-sm'
+                                            : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                                    )}
+                                >
+                                    <span>{tab.label}</span>
+                                    <span className={cn(
+                                        'text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold',
+                                        isActive ? 'bg-white/25 text-white' : 'neu-badge-pill text-slate-500'
+                                    )}>
+                                        {count}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
 
+                    {/* Source Filters */}
                     <div className="ml-auto flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
-                            <Funnel className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                            <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
                             Filter
                         </span>
-                        {SOURCE_FILTERS.map((filter) => (
-                            <button
-                                key={filter.key}
-                                type="button"
-                                onClick={() => setSourceFilter(filter.key)}
-                                aria-pressed={sourceFilter === filter.key}
-                                className={cn(
-                                    'rounded border px-2.5 py-1 text-[11px] font-medium transition-colors',
-                                    sourceFilter === filter.key
-                                        ? 'border-primary-500/30 bg-primary-500/15 text-primary-600 shadow-sm'
-                                        : 'border-edge/10 bg-surface-900/40 text-gray-500 hover:border-edge/20 hover:text-heading'
-                                )}
-                            >
-                                {filter.label}
-                            </button>
-                        ))}
+                        <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1 overflow-x-auto no-scrollbar">
+                            {SOURCE_FILTERS.map((filter) => {
+                                const isActive = sourceFilter === filter.key;
+                                return (
+                                    <button
+                                        key={filter.key}
+                                        type="button"
+                                        onClick={() => setSourceFilter(filter.key)}
+                                        aria-pressed={isActive}
+                                        className={cn(
+                                            'rounded-lg px-2.5 py-1 text-xs font-bold transition-all whitespace-nowrap',
+                                            isActive
+                                                ? 'neu-btn-active scale-102 shadow-sm'
+                                                : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                                        )}
+                                    >
+                                        {filter.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center rounded-lg border border-edge/10 bg-surface-900/30 p-1">
-                        <span className="px-2 text-[11px] text-gray-500 inline-flex items-center gap-1">
-                            <CalendarDays className="h-3 w-3" /> Date
+                <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+                    {/* Date Filters */}
+                    <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1 overflow-x-auto no-scrollbar">
+                        <span className="px-2 text-xs font-bold text-slate-400 inline-flex items-center gap-1.5">
+                            <CalendarDays className="h-3.5 w-3.5 text-blue-500" /> Date
                         </span>
-                        {DATE_FILTERS.map((filter) => (
-                            <button
-                                key={filter.key}
-                                type="button"
-                                onClick={() => setDateRange(filter.key)}
-                                className={cn(
-                                    'rounded px-2 py-1 text-[11px] font-medium transition-colors',
-                                    dateRange === filter.key ? 'bg-primary-500/15 text-primary-600 shadow-sm' : 'text-gray-500 hover:text-heading'
-                                )}
-                            >
-                                {filter.label}
-                            </button>
-                        ))}
+                        {DATE_FILTERS.map((filter) => {
+                            const isActive = dateRange === filter.key;
+                            return (
+                                <button
+                                    key={filter.key}
+                                    type="button"
+                                    onClick={() => setDateRange(filter.key)}
+                                    className={cn(
+                                        'rounded-lg px-2.5 py-1 text-xs font-bold transition-all whitespace-nowrap',
+                                        isActive ? 'neu-btn-active scale-102 shadow-sm' : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                                    )}
+                                >
+                                    {filter.label}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {dateRange === 'custom' && (
@@ -923,23 +985,23 @@ export default function OrdersPage() {
                             <button
                                 type="button"
                                 onClick={() => openDatePicker(customFromInputRef)}
-                                className="inline-flex h-8 min-w-[132px] items-center justify-between gap-2 rounded-lg border border-edge/10 bg-surface-900/40 px-3 text-xs font-medium text-heading transition-colors hover:border-edge/20"
+                                className="neu-terminal-pill-btn inline-flex h-8 min-w-[132px] items-center justify-between gap-2 rounded-xl px-3 text-xs font-semibold text-heading transition-all"
                             >
-                                <span className={cn(customFromDate ? 'text-heading' : 'text-gray-500')}>
+                                <span className={cn(customFromDate ? 'text-heading font-bold' : 'text-slate-400')}>
                                     {formatCustomDateLabel(customFromDate)}
                                 </span>
-                                <CalendarDays className="h-3.5 w-3.5 text-gray-500" />
+                                <CalendarDays className="h-3.5 w-3.5 text-emerald-500" />
                             </button>
-                            <span className="text-[11px] text-gray-500">to</span>
+                            <span className="text-xs text-slate-400 font-bold">to</span>
                             <button
                                 type="button"
                                 onClick={() => openDatePicker(customToInputRef)}
-                                className="inline-flex h-8 min-w-[132px] items-center justify-between gap-2 rounded-lg border border-edge/10 bg-surface-900/40 px-3 text-xs font-medium text-heading transition-colors hover:border-edge/20"
+                                className="neu-terminal-pill-btn inline-flex h-8 min-w-[132px] items-center justify-between gap-2 rounded-xl px-3 text-xs font-semibold text-heading transition-all"
                             >
-                                <span className={cn(customToDate ? 'text-heading' : 'text-gray-500')}>
+                                <span className={cn(customToDate ? 'text-heading font-bold' : 'text-slate-400')}>
                                     {formatCustomDateLabel(customToDate)}
                                 </span>
-                                <CalendarDays className="h-3.5 w-3.5 text-gray-500" />
+                                <CalendarDays className="h-3.5 w-3.5 text-emerald-500" />
                             </button>
                             <input
                                 ref={customFromInputRef}
@@ -962,63 +1024,85 @@ export default function OrdersPage() {
                         </div>
                     )}
 
-                    <div className="inline-flex items-center rounded-lg border border-edge/10 bg-surface-900/30 p-1">
-                        {['All', 'BUY', 'SELL'].map((value) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => setSideFilter(value === 'All' ? 'all' : value)}
-                                aria-pressed={sideFilter === (value === 'All' ? 'all' : value)}
-                                className={cn(
-                                    'rounded px-2 py-1 text-[11px] font-medium transition-colors',
-                                    sideFilter === (value === 'All' ? 'all' : value)
-                                        ? 'bg-primary-500/15 text-primary-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-heading'
-                                )}
-                            >
-                                {value}
-                            </button>
-                        ))}
+                    {/* Side Filters */}
+                    <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1">
+                        {['All', 'BUY', 'SELL'].map((value) => {
+                            const valKey = value === 'All' ? 'all' : value;
+                            const isActive = sideFilter === valKey;
+                            return (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setSideFilter(valKey)}
+                                    aria-pressed={isActive}
+                                    className={cn(
+                                        'rounded-lg px-2.5 py-1 text-xs font-bold transition-all',
+                                        isActive
+                                            ? value === 'BUY'
+                                                ? 'bg-bull text-white shadow-bull scale-102'
+                                                : value === 'SELL'
+                                                ? 'bg-bear text-white shadow-bear scale-102'
+                                                : 'neu-btn-active scale-102 shadow-sm'
+                                            : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                                    )}
+                                >
+                                    {value}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    <div className="inline-flex items-center rounded-lg border border-edge/10 bg-surface-900/30 p-1">
-                        {['All', 'MIS', 'CNC', 'NRML'].map((value) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => setProductFilter(value === 'All' ? 'all' : value)}
-                                aria-pressed={productFilter === (value === 'All' ? 'all' : value)}
-                                className={cn(
-                                    'rounded px-2 py-1 text-[11px] font-medium transition-colors',
-                                    productFilter === (value === 'All' ? 'all' : value)
-                                        ? 'bg-primary-500/15 text-primary-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-heading'
-                                )}
-                            >
-                                {value}
-                            </button>
-                        ))}
+                    {/* Product Filters */}
+                    <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1">
+                        {['All', 'MIS', 'CNC', 'NRML'].map((value) => {
+                            const valKey = value === 'All' ? 'all' : value;
+                            const isActive = productFilter === valKey;
+                            return (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setProductFilter(valKey)}
+                                    aria-pressed={isActive}
+                                    className={cn(
+                                        'rounded-lg px-2.5 py-1 text-xs font-bold transition-all',
+                                        isActive ? 'neu-btn-active scale-102 shadow-sm' : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                                    )}
+                                >
+                                    {value}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    <div className="relative ml-auto w-full lg:w-[340px]">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    {/* Search Input */}
+                    <div className="neu-dash-inset relative ml-auto w-full lg:w-[320px] rounded-xl flex items-center px-3 py-1 focus-within:ring-2 focus-within:ring-emerald-500/40">
+                        <Search className="h-4 w-4 text-slate-400 mr-2 flex-shrink-0" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search by symbol, side, or status..."
-                            className="w-full rounded-lg border border-edge/10 bg-surface-800/60 py-2 pl-10 pr-3 text-sm text-heading placeholder-gray-500 focus:border-primary-500/30 focus:outline-none"
+                            className="w-full bg-transparent py-1 text-xs font-semibold text-heading placeholder-slate-400 focus:outline-none"
                         />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="text-slate-400 hover:text-heading text-xs font-bold ml-1 px-1"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
             {sortedVisibleOrders.length > 0 ? (
-                <div className="glass-card overflow-hidden">
+                <div className="neu-dash-card overflow-hidden rounded-2xl">
                     <div className="overflow-x-auto">
                         <table className="min-w-[1220px] w-full text-sm">
-                            <thead className="border-b border-edge/5 bg-surface-900/30">
-                                <tr className="text-[11px] uppercase tracking-wider text-gray-500">
+                            <thead className="border-b border-slate-200/50 dark:border-white/5 bg-slate-100/60 dark:bg-white/[0.02]">
+                                <tr className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                                     {[
                                         ['symbol', 'Symbol', 'text-left'],
                                         ['side', 'Side', 'text-left'],
@@ -1034,13 +1118,13 @@ export default function OrdersPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => onSort(key)}
-                                                className="inline-flex items-center gap-1 text-inherit"
+                                                className="inline-flex items-center gap-1 text-inherit hover:text-heading transition-colors"
                                             >
-                                                {label}
+                                                <span>{label}</span>
                                                 {sortConfig.key === key ? (
-                                                    sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                                                    sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3 text-emerald-500" /> : <ChevronDown className="h-3 w-3 text-emerald-500" />
                                                 ) : (
-                                                    <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                                                    <ChevronsUpDown className="h-3 w-3 opacity-50" />
                                                 )}
                                             </button>
                                         </th>
@@ -1049,7 +1133,7 @@ export default function OrdersPage() {
                                 </tr>
                             </thead>
 
-                            <tbody className="divide-y divide-edge/[0.04]">
+                            <tbody className="divide-y divide-slate-200/40 dark:divide-white/[0.03]">
                                 {sortedVisibleOrders.map((order) => {
                                     const isPending = getStatusKind(order.status_norm) === 'pending';
                                     const isExpanded = expandedRowId === order.uid;
@@ -1062,56 +1146,65 @@ export default function OrdersPage() {
                                             <tr
                                                 onClick={() => setExpandedRowId((prev) => (prev === order.uid ? null : order.uid))}
                                                 className={cn(
-                                                    'cursor-pointer transition-colors hover:bg-overlay/[0.04]',
-                                                    hasPair && 'border-l-2 border-primary-500/20',
-                                                    flashRows[order.uid] === 'new' && 'bg-profit/10',
-                                                    flashRows[order.uid] === 'rejected' && 'bg-loss/10'
+                                                    'cursor-pointer transition-colors hover:bg-slate-500/5 dark:hover:bg-white/[0.03]',
+                                                    hasPair && 'border-l-2 border-emerald-500/40',
+                                                    flashRows[order.uid] === 'new' && 'bg-emerald-500/10',
+                                                    flashRows[order.uid] === 'rejected' && 'bg-rose-500/10'
                                                 )}
                                             >
                                                 <td className="px-4 py-3">
-                                                    <div className="font-semibold text-heading">{cleanSymbol(order.symbol_norm || order.symbol || '—')}</div>
-                                                    <div className="mt-0.5 text-[10px] uppercase text-gray-500">{order.exchange_norm || '—'}</div>
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="w-8 h-8 rounded-xl neu-badge-pill flex items-center justify-center text-xs font-black text-emerald-500 flex-shrink-0">
+                                                            {cleanSymbol(order.symbol_norm || order.symbol || '—').slice(0, 2)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-heading">{cleanSymbol(order.symbol_norm || order.symbol || '—')}</div>
+                                                            <div className="text-[10px] uppercase font-bold text-slate-400">{order.exchange_norm || '—'}</div>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className={cn(
-                                                        'inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                                                        order.side_norm === 'BUY' ? 'bg-bull/10 text-bull' : 'bg-bear/10 text-bear'
+                                                        'neu-badge-pill font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1',
+                                                        order.side_norm === 'BUY'
+                                                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                                            : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
                                                     )}>
                                                         {order.side_norm || '—'}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-right font-mono text-heading">{formatQuantity(order.display_qty)}</td>
-                                                <td className="px-4 py-3 text-right font-mono text-heading">{formatCurrency(order.avg_price)}</td>
+                                                <td className="px-4 py-3 text-right font-mono font-bold text-heading">{formatQuantity(order.display_qty)}</td>
+                                                <td className="px-4 py-3 text-right font-mono font-bold text-heading">{formatCurrency(order.avg_price)}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex rounded-md border border-edge/10 bg-surface-900/40 px-2 py-0.5 text-[11px] text-gray-300">
+                                                    <span className="neu-badge-pill px-2.5 py-0.5 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                                         {order.order_type_display || '—'}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex rounded-md border border-edge/10 bg-surface-900/40 px-2 py-0.5 text-[11px] text-gray-300">
+                                                    <span className="neu-badge-pill px-2.5 py-0.5 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                                         {order.product_norm || '—'}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-xs text-gray-500">{formatOrderTime(order.ts)}</td>
+                                                <td className="px-4 py-3 text-xs font-medium text-slate-400">{formatOrderTime(order.ts)}</td>
                                                 <td className="px-4 py-3 text-right font-mono">
-                                                    <span className={cn('font-semibold', pnlValue > 0 ? 'text-profit' : pnlValue < 0 ? 'text-loss' : 'text-gray-500')}>
+                                                    <span className={cn('font-bold', pnlValue > 0 ? 'text-emerald-500' : pnlValue < 0 ? 'text-rose-500' : 'text-slate-400')}>
                                                         {pnlValue > 0 ? '+' : ''}{formatCurrency(pnlValue)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className={cn(
-                                                        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
-                                                        getStatusKind(order.status_norm) === 'filled' && 'border-profit/20 bg-profit/10 text-profit',
-                                                        getStatusKind(order.status_norm) === 'pending' && 'border-primary-500/20 bg-primary-500/10 text-primary-600',
-                                                        getStatusKind(order.status_norm) === 'rejected' && 'border-loss/20 bg-loss/10 text-loss',
-                                                        getStatusKind(order.status_norm) === 'other' && 'border-edge/10 bg-surface-900/40 text-gray-400'
+                                                        'neu-badge-pill px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 text-[11px] font-bold',
+                                                        getStatusKind(order.status_norm) === 'filled' && 'border-emerald-500/30 bg-emerald-500/15 text-emerald-500',
+                                                        getStatusKind(order.status_norm) === 'pending' && 'border-amber-500/30 bg-amber-500/15 text-amber-500',
+                                                        getStatusKind(order.status_norm) === 'rejected' && 'border-rose-500/30 bg-rose-500/15 text-rose-500',
+                                                        getStatusKind(order.status_norm) === 'other' && 'text-slate-400'
                                                     )}>
                                                         <span className={cn(
                                                             'h-1.5 w-1.5 rounded-full',
-                                                            getStatusKind(order.status_norm) === 'filled' && 'bg-profit',
-                                                            getStatusKind(order.status_norm) === 'pending' && 'bg-primary-500',
-                                                            getStatusKind(order.status_norm) === 'rejected' && 'bg-loss',
-                                                            getStatusKind(order.status_norm) === 'other' && 'bg-gray-500'
+                                                            getStatusKind(order.status_norm) === 'filled' && 'bg-emerald-500',
+                                                            getStatusKind(order.status_norm) === 'pending' && 'bg-amber-500 animate-pulse',
+                                                            getStatusKind(order.status_norm) === 'rejected' && 'bg-rose-500',
+                                                            getStatusKind(order.status_norm) === 'other' && 'bg-slate-400'
                                                         )} />
                                                         {order.status_norm || '—'}
                                                     </span>
@@ -1122,7 +1215,7 @@ export default function OrdersPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => openModifyEditor(order)}
-                                                                className="rounded border border-edge/10 bg-surface-900/50 px-2 py-1 text-[11px] font-medium text-heading hover:border-edge/20"
+                                                                className="neu-terminal-pill-btn px-2.5 py-1 text-xs font-bold rounded-lg text-heading"
                                                             >
                                                                 Modify
                                                             </button>
@@ -1130,69 +1223,69 @@ export default function OrdersPage() {
                                                                 type="button"
                                                                 disabled={cancelLoadingId === order.uid}
                                                                 onClick={() => handleCancelOrder(order)}
-                                                                className="rounded border border-loss/20 bg-loss/10 px-2 py-1 text-[11px] font-medium text-loss hover:border-loss/30 disabled:opacity-60"
+                                                                className="neu-terminal-pill-btn px-2.5 py-1 text-xs font-bold rounded-lg text-rose-500 hover:bg-rose-500/10 disabled:opacity-60"
                                                             >
                                                                 {cancelLoadingId === order.uid ? 'Cancelling...' : 'Cancel'}
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-[11px] text-gray-500">—</span>
+                                                        <span className="text-[11px] text-slate-400">—</span>
                                                     )}
                                                 </td>
                                             </tr>
 
                                             {isExpanded && (
-                                                <tr className="bg-surface-900/20">
+                                                <tr className="bg-slate-500/5 dark:bg-white/[0.02]">
                                                     <td colSpan={10} className="px-4 py-3">
                                                         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                                                            <div className="rounded-lg border border-edge/10 bg-surface-900/40 p-3 text-xs text-gray-400 space-y-1">
-                                                                <div>Order ID: <span className="text-heading">{order.id || order.order_id || 'N/A'}</span></div>
-                                                                {order.exchange_order_id && <div>Exchange Order ID: <span className="text-heading">{order.exchange_order_id}</span></div>}
-                                                                {order.validity && <div>Validity: <span className="text-heading">{order.validity}</span></div>}
+                                                            <div className="neu-dash-inset rounded-xl p-3.5 text-xs text-slate-400 space-y-1.5">
+                                                                <div>Order ID: <span className="text-heading font-bold">{order.id || order.order_id || 'N/A'}</span></div>
+                                                                {order.exchange_order_id && <div>Exchange Order ID: <span className="text-heading font-bold">{order.exchange_order_id}</span></div>}
+                                                                {order.validity && <div>Validity: <span className="text-heading font-bold">{order.validity}</span></div>}
                                                             </div>
-                                                            <div className="rounded-lg border border-edge/10 bg-surface-900/40 p-3 text-xs text-gray-400 space-y-1">
-                                                                {(order.trigger_price != null) && <div>Trigger Price: <span className="text-heading">{formatCurrency(order.trigger_price)}</span></div>}
-                                                                <div>Created: <span className="text-heading">{formatOrderTime(parseOrderTimestamp({ created_at: order.created_at }))}</span></div>
-                                                                <div>Updated: <span className="text-heading">{formatOrderTime(parseOrderTimestamp({ updated_at: order.updated_at }))}</span></div>
+                                                            <div className="neu-dash-inset rounded-xl p-3.5 text-xs text-slate-400 space-y-1.5">
+                                                                {(order.trigger_price != null) && <div>Trigger Price: <span className="text-heading font-bold">{formatCurrency(order.trigger_price)}</span></div>}
+                                                                <div>Created: <span className="text-heading font-bold">{formatOrderTime(parseOrderTimestamp({ created_at: order.created_at }))}</span></div>
+                                                                <div>Updated: <span className="text-heading font-bold">{formatOrderTime(parseOrderTimestamp({ updated_at: order.updated_at }))}</span></div>
                                                             </div>
-                                                            <div className="rounded-lg border border-edge/10 bg-surface-900/40 p-3 text-xs text-gray-400 space-y-1">
-                                                                <div>Filled Qty: <span className="text-heading">{formatQuantity(order.filled_quantity ?? 0)}</span></div>
-                                                                <div>Tag: <span className="text-heading">{order.strategy_tag || 'MANUAL'}</span></div>
-                                                                {order.rejection_reason && <div>Rejection Reason: <span className="text-heading">{order.rejection_reason}</span></div>}
+                                                            <div className="neu-dash-inset rounded-xl p-3.5 text-xs text-slate-400 space-y-1.5">
+                                                                <div>Filled Qty: <span className="text-heading font-bold">{formatQuantity(order.filled_quantity ?? 0)}</span></div>
+                                                                <div>Tag: <span className="text-heading font-bold">{order.strategy_tag || 'MANUAL'}</span></div>
+                                                                {order.rejection_reason && <div>Rejection Reason: <span className="text-heading font-bold">{order.rejection_reason}</span></div>}
                                                             </div>
                                                         </div>
 
                                                         {isEditing && (
-                                                            <div className="mt-3 rounded-lg border border-edge/10 bg-surface-900/40 p-3">
+                                                            <div className="mt-3 neu-dash-card p-4 rounded-xl">
                                                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                                                                    <label className="text-xs text-gray-400">
+                                                                    <label className="text-xs text-slate-400 font-bold">
                                                                         Price
                                                                         <input
                                                                             type="number"
                                                                             step="0.05"
                                                                             value={editDraft.price}
                                                                             onChange={(e) => setEditDraft((prev) => ({ ...prev, price: e.target.value }))}
-                                                                            className="mt-1 h-8 w-full rounded border border-edge/10 bg-surface-900/40 px-2 text-xs text-heading"
+                                                                            className="mt-1 h-8 w-full rounded-lg neu-dash-inset px-2.5 text-xs text-heading font-bold"
                                                                         />
                                                                     </label>
-                                                                    <label className="text-xs text-gray-400">
+                                                                    <label className="text-xs text-slate-400 font-bold">
                                                                         Qty
                                                                         <input
                                                                             type="number"
                                                                             value={editDraft.quantity}
                                                                             onChange={(e) => setEditDraft((prev) => ({ ...prev, quantity: e.target.value }))}
-                                                                            className="mt-1 h-8 w-full rounded border border-edge/10 bg-surface-900/40 px-2 text-xs text-heading"
+                                                                            className="mt-1 h-8 w-full rounded-lg neu-dash-inset px-2.5 text-xs text-heading font-bold"
                                                                         />
                                                                     </label>
                                                                     {['SL', 'SL-M'].includes(order.order_type_display) && (
-                                                                        <label className="text-xs text-gray-400">
+                                                                        <label className="text-xs text-slate-400 font-bold">
                                                                             Trigger Price
                                                                             <input
                                                                                 type="number"
                                                                                 step="0.05"
                                                                                 value={editDraft.triggerPrice}
                                                                                 onChange={(e) => setEditDraft((prev) => ({ ...prev, triggerPrice: e.target.value }))}
-                                                                                className="mt-1 h-8 w-full rounded border border-edge/10 bg-surface-900/40 px-2 text-xs text-heading"
+                                                                                className="mt-1 h-8 w-full rounded-lg neu-dash-inset px-2.5 text-xs text-heading font-bold"
                                                                             />
                                                                         </label>
                                                                     )}
@@ -1202,14 +1295,14 @@ export default function OrdersPage() {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleModifySubmit(order)}
-                                                                        className="rounded border border-primary-500/20 bg-primary-500/10 px-3 py-1.5 text-xs font-semibold text-primary-600"
+                                                                        className="neu-btn-active rounded-xl px-3.5 py-1.5 text-xs font-bold text-white shadow-sm"
                                                                     >
                                                                         Save
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => setEditingRowId(null)}
-                                                                        className="rounded border border-edge/10 bg-surface-900/60 px-3 py-1.5 text-xs font-semibold text-gray-400"
+                                                                        className="neu-terminal-pill-btn rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-400"
                                                                     >
                                                                         Cancel
                                                                     </button>
@@ -1218,7 +1311,7 @@ export default function OrdersPage() {
                                                         )}
 
                                                         {rowErrors[order.uid] && (
-                                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded border border-loss/20 bg-loss/10 px-2 py-1 text-xs text-loss">
+                                                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-500">
                                                                 <AlertCircle className="h-3.5 w-3.5" />
                                                                 {rowErrors[order.uid]}
                                                             </div>
@@ -1234,17 +1327,25 @@ export default function OrdersPage() {
                     </div>
                 </div>
             ) : (
-                <div className="glass-card p-12 text-center">
-                    <EmptyIcon className="mx-auto mb-3 h-12 w-12 text-gray-600 opacity-30" />
-                    <p className="text-sm font-medium text-gray-500">{emptyStateMessage.title}</p>
-                    <p className="mt-1 text-xs text-gray-600">{emptyStateMessage.subtitle}</p>
+                <div className="neu-dash-card p-14 text-center rounded-2xl flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl neu-dash-inset flex items-center justify-center text-slate-400 mb-4 shadow-inner">
+                        <EmptyIcon className="w-8 h-8 opacity-70 text-emerald-500/70" />
+                    </div>
+                    <p className="text-base font-bold text-heading tracking-tight">{emptyStateMessage.title}</p>
+                    <p className="mt-1 text-xs text-slate-400 max-w-md">{emptyStateMessage.subtitle}</p>
                 </div>
             )}
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-600">
-                <span>Rows: {formatQuantity(sortedVisibleOrders.length)}</span>
-                <span>Gross Turnover: {formatCurrency(visibleGrossTurnover)}</span>
-                <span>Sort: {sortLabel}</span>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-medium">
+                <div className="neu-dash-inset px-3 py-1.5 rounded-xl font-mono">
+                    Rows: <span className="text-heading font-bold">{formatQuantity(sortedVisibleOrders.length)}</span>
+                </div>
+                <div className="neu-dash-inset px-3 py-1.5 rounded-xl font-mono">
+                    Gross Turnover: <span className="text-heading font-bold">{formatCurrency(visibleGrossTurnover)}</span>
+                </div>
+                <div className="neu-dash-inset px-3 py-1.5 rounded-xl">
+                    Sort: <span className="text-heading font-bold">{sortLabel}</span>
+                </div>
             </div>
         </div>
     );

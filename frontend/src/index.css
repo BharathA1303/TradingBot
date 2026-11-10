@@ -1967,3 +1967,48 @@ input[type="number"] {
   transform: translateY(-1px);
   box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5), -1px -1px 4px rgba(255, 255, 255, 0.035);
 }
+
+/* ─── Orders Neumorphic Soft-UI ─── */
+.neu-orders-page {
+  background: var(--bg-base);
+}
+
+.neu-orders-kpi {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 4px 4px 14px rgba(163, 177, 198, 0.22), -4px -4px 14px rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .neu-orders-kpi {
+  background: rgba(18, 24, 38, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.42), -2px -2px 6px rgba(255, 255, 255, 0.025);
+  border-radius: 18px;
+}
+
+.neu-orders-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 18px rgba(163, 177, 198, 0.32), -5px -5px 16px rgba(255, 255, 255, 1);
+}
+
+.dark .neu-orders-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 20px rgba(0, 0, 0, 0.55), -2px -2px 8px rgba(255, 255, 255, 0.035);
+}
+
+.neu-badge-pill {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 1px 1px 4px rgba(163, 177, 198, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.85);
+  transition: all 0.15s ease;
+}
+
+.dark .neu-badge-pill {
+  background: rgba(22, 30, 48, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.35), -1px -1px 3px rgba(255, 255, 255, 0.02);
+}
