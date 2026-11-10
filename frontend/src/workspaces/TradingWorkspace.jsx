@@ -12,10 +12,7 @@ import { useMarketData } from '../hooks/useMarketData';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import ChartHeader from '../components/trading/ChartHeader';
 import ZebuLiveChart from '../components/trading/ZebuLiveChart';
-import Watchlist from '../components/trading/Watchlist';
 import OrderPanel from '../components/trading/OrderPanel';
-import ResizablePanel from '../components/layout/ResizablePanel';
-import ResponsiveDrawer from '../components/layout/ResponsiveDrawer';
 import { HardenedOrderDrawer, HardenedChartShell } from '../responsive/hardening';
 import DockContainer from '../components/layout/DockContainer';
 import MobileTradeBar from '../components/layout/MobileTradeBar';
@@ -28,7 +25,6 @@ import { cn } from '../utils/cn';
 import { CHART_PERIODS, DEFAULT_CHART_PERIOD, isMcxSymbol } from '../utils/constants';
 import { useResponsive } from '../responsive/hooks/useResponsive';
 import { useZeroLossStore } from '../stores/useZeroLossStore';
-import { PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { computeOpenLots } from '../utils/tradeLots';
 import { buildQuoteWithLivePrice, getLiveQuoteForSymbol } from '../utils/liveQuote';
 import { resolveSymbolPrice } from '../market/UnifiedPriceResolver';
@@ -115,7 +111,6 @@ export default function TradingWorkspace() {
     const [watchlistToggleBusy, setWatchlistToggleBusy] = useState(false);
     const [bottomCollapsed, setBottomCollapsed] = useState(false);
     const [bottomHeight, setBottomHeight] = useState(DEFAULT_BOTTOM_HEIGHT);
-    const [watchlistVisible, setWatchlistVisible] = useState(false);
     const [orderPanelVisible, setOrderPanelVisible] = useState(false);
     const getDefaultOrderPanelPos = useCallback(() => ({
         x: Math.max(16, window.innerWidth - ORDER_FLOAT_WIDTH - 16),
@@ -141,7 +136,6 @@ export default function TradingWorkspace() {
     }, [searchParams]);
 
     // Responsive drawer states
-    const [watchlistDrawerOpen, setWatchlistDrawerOpen] = useState(false);
     const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
 
     // Breakpoint
@@ -303,7 +297,6 @@ export default function TradingWorkspace() {
     // Close drawers on breakpoint change to desktop
     useEffect(() => {
         if (isWide) {
-            setWatchlistDrawerOpen(false);
             setOrderDrawerOpen(false);
         }
     }, [isWide]);
@@ -333,8 +326,7 @@ export default function TradingWorkspace() {
 
     const handleSelectSymbol = useCallback((symbol) => {
         setSelectedSymbol(symbol);
-        if (isCompact) setWatchlistDrawerOpen(false);
-    }, [isCompact]);
+    }, []);
 
     const handleToggleWatchlist = useCallback(async () => {
         if (!selectedSymbol || watchlistToggleBusy) return;
@@ -513,30 +505,13 @@ export default function TradingWorkspace() {
         },
     ], [holdings, effectiveOpenLots, orders, handlePositionSell, handlePositionBuy]);
 
-    // ── Shared watchlist element ───────────────────────────────────────────────
-    // NOTE: Watchlist now reads everything from useWatchlistStore internally.
-    // We no longer need to pass items/prices/watchlistId as props.
-    const watchlistEl = (
-        <Watchlist
-            selectedSymbol={selectedSymbol}
-            onSelectSymbol={handleSelectSymbol}
-            onBuy={handlePositionBuy}
-            onSell={handlePositionSell}
-        />
-    );
-
     const { mobileTradingTab } = useResponsive();
 
     useEffect(() => {
         if (!isCompact) return;
-        if (mobileTradingTab === 'watchlist') {
-            setWatchlistDrawerOpen(true);
-            setOrderDrawerOpen(false);
-        } else if (mobileTradingTab === 'order') {
+        if (mobileTradingTab === 'order') {
             setOrderDrawerOpen(true);
-            setWatchlistDrawerOpen(false);
         } else {
-            setWatchlistDrawerOpen(false);
             setOrderDrawerOpen(false);
         }
     }, [isCompact, mobileTradingTab]);
@@ -555,91 +530,41 @@ export default function TradingWorkspace() {
     return (
         <div
             className={cn(
-                'terminal-grid',
-                (!watchlistVisible || !isWide) && 'terminal-grid--no-watchlist',
-                isWide && 'terminal-grid--no-right',
+                'terminal-grid terminal-grid--no-watchlist terminal-grid--no-right',
+                'neu-terminal-page p-2 sm:p-2.5 gap-2 sm:gap-2.5',
                 isCompact ? 'h-full min-h-0 flex-1' : 'h-[calc(100vh-56px-36px)]',
             )}
             onFocus={() => setIsTerminalFocused(true)}
             onBlur={() => setIsTerminalFocused(false)}
         >
-            {isCompact && mobileTradingTab === 'watchlist' && (
-                <div className="hard-mobile-watchlist-panel flex-col flex-1 min-h-0 min-w-0 overflow-hidden lg:hidden">
-                    {watchlistEl}
-                </div>
-            )}
-            {/* ── WATCHLIST AREA ─────────────────────────────────────── */}
-            {isWide ? (
-                watchlistVisible ? (
-                    <ResizablePanel
-                        side="left"
-                        defaultSize={360}
-                        minSize={260}
-                        maxSize={520}
-                        className="terminal-area-watchlist hidden lg:flex"
-                    >
-                        {watchlistEl}
-                    </ResizablePanel>
-                ) : null
-            ) : (
-                <ResponsiveDrawer
-                    open={watchlistDrawerOpen}
-                    onClose={() => setWatchlistDrawerOpen(false)}
-                    side="left"
-                    isCompact={true}
-                    width="w-[280px]"
-                >
-                    {watchlistEl}
-                </ResponsiveDrawer>
-            )}
-
             {/* ── CHART HEADER AREA ─────────────────────────────────── */}
-            <div className="terminal-area-header min-w-0 flex items-center">
-                {/* Watchlist toggle — desktop only */}
-                {isWide && (
-                    <button
-                        onClick={() => {
-                            setWatchlistVisible((v) => !v);
-                            setTimeout(() => window.dispatchEvent(new Event('resize')), 250);
-                        }}
-                        className={cn(
-                            "flex-shrink-0 p-1.5 ml-1 rounded-md transition-all duration-200",
-                            "text-slate-400 hover:text-heading hover:bg-overlay/[0.06]",
-                            !watchlistVisible && "text-primary-500 bg-primary-500/10"
-                        )}
-                        title={watchlistVisible ? "Hide watchlist" : "Show watchlist"}
-                    >
-                        {watchlistVisible ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
-                    </button>
-                )}
-                <div className="flex-1 min-w-0">
-                    <ChartHeader
-                        symbol={selectedSymbol}
-                        quote={displayQuote}
-                        period={chartPeriod}
-                        onPeriodChange={setChartPeriod}
-                        strategyDockOpen={strategyDockOpen}
-                        isWatchlisted={Boolean(currentWatchlistItem)}
-                        onToggleWatchlist={handleToggleWatchlist}
-                        watchlistBusy={watchlistToggleBusy}
-                        onToggleStrategyDock={() => setStrategyDockOpen((v) => !v)}
-                        trendData={trendData}
-                        isMobile={isMobile}
-                        hasPositions={holdings.length > 0}
-                        orderPanelVisible={orderPanelVisible}
-                        onToggleOrderPanel={() => {
-                            if (orderPanelVisible) {
-                                closeFloatingOrderPanel();
-                            } else {
-                                openFloatingOrderPanel();
-                            }
-                        }}
-                    />
-                </div>
+            <div className="terminal-area-header min-w-0">
+                <ChartHeader
+                    symbol={selectedSymbol}
+                    quote={displayQuote}
+                    period={chartPeriod}
+                    onPeriodChange={setChartPeriod}
+                    strategyDockOpen={strategyDockOpen}
+                    isWatchlisted={Boolean(currentWatchlistItem)}
+                    onToggleWatchlist={handleToggleWatchlist}
+                    watchlistBusy={watchlistToggleBusy}
+                    onToggleStrategyDock={() => setStrategyDockOpen((v) => !v)}
+                    trendData={trendData}
+                    isMobile={isMobile}
+                    hasPositions={holdings.length > 0}
+                    orderPanelVisible={orderPanelVisible}
+                    onToggleOrderPanel={() => {
+                        if (orderPanelVisible) {
+                            closeFloatingOrderPanel();
+                        } else {
+                            openFloatingOrderPanel();
+                        }
+                    }}
+                />
             </div>
 
             {/* ── CHART AREA ────────────────────────────────────────── */}
-            <HardenedChartShell className="terminal-area-chart min-w-0 min-h-0 relative overflow-hidden">
+            <HardenedChartShell className="terminal-area-chart neu-terminal-chart-shell min-w-0 min-h-0 relative overflow-hidden">
                 <ErrorBoundary fallback="Chart failed to load. Please refresh.">
                     <ZebuLiveChart
                         key={selectedSymbol}
@@ -674,7 +599,7 @@ export default function TradingWorkspace() {
             {isWide ? (
                 orderPanelVisible ? (
                     <div
-                        className="fixed z-50 hidden lg:flex flex-col rounded-2xl select-none bg-surface-900/95 border border-edge/10 shadow-2xl shadow-black/40 overflow-visible"
+                        className="fixed z-50 hidden lg:flex flex-col rounded-2xl select-none neu-dash-card shadow-2xl overflow-visible"
                         style={{
                             left: orderPanelPos.x,
                             top: orderPanelPos.y,
@@ -725,7 +650,6 @@ export default function TradingWorkspace() {
                         price={displayQuote?.price ?? 0}
                         onBuy={handleBuy}
                         onSell={handleSell}
-                        onToggleWatchlist={() => setWatchlistDrawerOpen((v) => !v)}
                     />
                 </div>
             )}

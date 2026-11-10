@@ -31,23 +31,25 @@ function DockContainer({
 
     return (
         <div className={cn(
-            'flex flex-col bg-surface-950 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-200',
-            collapsed ? 'h-[32px]' : 'h-full',
+            'flex flex-col neu-terminal-dock overflow-hidden transition-all duration-200',
+            collapsed ? 'h-[36px]' : 'h-full',
             className,
         )}>
             {!collapsed && (
                 <div
                     onMouseDown={onResizeStart}
-                    className="h-1.5 w-full cursor-row-resize hover:bg-primary-500/20 transition-colors"
+                    className="h-1.5 w-full cursor-row-resize hover:bg-emerald-500/30 transition-colors flex items-center justify-center"
                     title="Drag to resize"
-                />
+                >
+                    <div className="w-8 h-0.5 rounded-full bg-slate-300 dark:bg-white/20" />
+                </div>
             )}
             {/* Tab bar + collapse handle */}
-            <div className="flex items-center border-b border-slate-200 dark:border-slate-700 bg-surface-900/70 dark:bg-slate-900/50 flex-shrink-0">
+            <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-200/50 dark:border-white/5 flex-shrink-0">
                 {/* Collapse toggle */}
                 <button
                     onClick={onToggleCollapse}
-                    className="px-2 py-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-400 transition-colors"
+                    className="w-7 h-7 rounded-lg neu-terminal-pill-btn flex items-center justify-center text-slate-500 hover:text-heading transition-all"
                     title={collapsed ? 'Expand panel' : 'Collapse panel'}
                 >
                     <svg
@@ -61,29 +63,34 @@ function DockContainer({
                     </svg>
                 </button>
 
-                {/* Tabs */}
-                {tabs.map(({ key, label, count }) => (
-                    <button
-                        key={key}
-                        onClick={() => {
-                            setActiveTab(key);
-                            if (collapsed) onToggleCollapse?.();
-                        }}
-                        className={cn(
-                            'px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap border-b-2 border-transparent',
-                            activeTab === key
-                                ? 'text-primary-600 dark:text-blue-400 border-primary-600 dark:border-blue-400'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-400'
-                        )}
-                    >
-                        {label}
-                        {count != null && (
-                            <span className="ml-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-500">
-                                ({count})
-                            </span>
-                        )}
-                    </button>
-                ))}
+                {/* Sunken Tab Track */}
+                <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1 overflow-x-auto no-scrollbar">
+                    {tabs.map(({ key, label, count }) => (
+                        <button
+                            key={key}
+                            onClick={() => {
+                                setActiveTab(key);
+                                if (collapsed) onToggleCollapse?.();
+                            }}
+                            className={cn(
+                                'px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap',
+                                activeTab === key
+                                    ? 'neu-btn-active scale-102 shadow-sm'
+                                    : 'text-slate-500 hover:text-heading hover:bg-slate-500/10'
+                            )}
+                        >
+                            <span>{label}</span>
+                            {count != null && (
+                                <span className={cn(
+                                    "ml-1.5 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full",
+                                    activeTab === key ? "bg-white/20 text-white" : "bg-slate-200/80 dark:bg-slate-800 text-slate-500"
+                                )}>
+                                    {count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Active tab content */}

@@ -33,15 +33,17 @@ function MobileTradeBar({
             className,
         )}>
             {/* Watchlist toggle */}
-            <button
-                onClick={onToggleWatchlist}
-                className="p-2 rounded-lg bg-surface-800/80 border border-edge/10 text-gray-400 hover:text-heading transition-colors"
-                title="Watchlist"
-            >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-                </svg>
-            </button>
+            {onToggleWatchlist && (
+                <button
+                    onClick={onToggleWatchlist}
+                    className="p-2 rounded-lg bg-surface-800/80 border border-edge/10 text-gray-400 hover:text-heading transition-colors"
+                    title="Watchlist"
+                >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+                    </svg>
+                </button>
+            )}
 
             {/* Symbol + Price */}
             <div className="flex-1 min-w-0 flex items-center gap-2">

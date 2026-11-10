@@ -90,28 +90,33 @@ function ChartHeader({
             : 'NSE';
 
     return (
-        <div className="flex items-center w-full h-11 px-4 border-b border-edge/5 bg-surface-900/30">
+        <div className="neu-terminal-header flex items-center w-full h-12 px-3 sm:px-4 shadow-sm select-none">
 
             {/* ── LEFT: Symbol + Price + Change ──────────────────── */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="flex flex-col leading-none">
-                    <span className="text-sm font-semibold text-heading truncate max-w-[120px]">
-                        {cleanSymbol(symbol)}
-                    </span>
-                    <span className="text-[10px] text-gray-500 mt-0.5">{exchangeLabel}</span>
+            <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl neu-pulse-pill flex items-center justify-center font-black text-xs text-heading flex-shrink-0">
+                        {cleanSymbol(symbol).slice(0, 2)}
+                    </div>
+                    <div className="flex flex-col leading-none">
+                        <span className="text-sm font-extrabold text-heading truncate max-w-[130px] sm:max-w-[160px]">
+                            {cleanSymbol(symbol)}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-bold">{exchangeLabel}</span>
+                    </div>
                 </div>
 
                 {quote?.price != null && (
                     <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold font-price text-heading tabular-nums">
-                            {formatPrice(quote.price)}
+                        <span className="text-base font-black font-price text-heading tabular-nums">
+                            ₹{formatPrice(quote.price)}
                         </span>
                         {quote.change != null && !isMobile && (
                             <span className={cn(
-                                'text-xs font-price font-medium whitespace-nowrap tabular-nums',
+                                'text-xs font-price font-bold px-2.5 py-0.5 rounded-full neu-dash-badge whitespace-nowrap tabular-nums',
                                 pnlColorClass(quote.change)
                             )}>
-                                {quote.change >= 0 ? '+' : ''}
+                                {quote.change >= 0 ? '▲ +' : '▼ '}
                                 {formatPrice(quote.change)} ({formatPercent(quote.change_percent)})
                             </span>
                         )}
@@ -120,7 +125,7 @@ function ChartHeader({
             </div>
 
             {/* Divider */}
-            <div className="w-px h-5 bg-edge/10 mx-3 flex-shrink-0" />
+            <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2.5 sm:mx-3 flex-shrink-0" />
 
             {/* ── CENTER: Timeframe dropdown + Strategy ───────────── */}
             <div className="flex items-center gap-2 flex-1 justify-center">
@@ -129,11 +134,11 @@ function ChartHeader({
                     <button
                         onClick={() => setOpen((v) => !v)}
                         className={cn(
-                            'h-7 px-2.5 rounded-md border text-xs font-semibold',
-                            'inline-flex items-center gap-1.5 transition-colors duration-150',
+                            'h-7 px-2.5 rounded-xl text-xs font-bold',
+                            'inline-flex items-center gap-1.5 transition-all duration-150',
                             open
-                                ? 'bg-primary-600/20 border-primary-500/40 text-primary-600'
-                                : 'bg-surface-800/80 border-edge/20 text-gray-600 hover:text-heading hover:border-edge/40'
+                                ? 'neu-btn-active scale-102'
+                                : 'neu-terminal-pill-btn text-slate-600 dark:text-slate-300 hover:text-heading hover:scale-102'
                         )}
                     >
                         <span className="font-price tabular-nums">{currentLabel}</span>
@@ -143,66 +148,74 @@ function ChartHeader({
                     </button>
 
                     {open && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 min-w-[160px] rounded-lg border border-edge/10 bg-surface-900/95 backdrop-blur-xl shadow-xl shadow-black/40 py-1.5">
-                            <p className="px-3 pt-1 pb-1 text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Intraday</p>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[170px] rounded-2xl neu-dash-card shadow-2xl p-2 space-y-1">
+                            <p className="px-2 pt-1 pb-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">Intraday</p>
                             {INTRADAY.map(([key, { label }]) => (
                                 <button
                                     key={key}
                                     onClick={() => { onPeriodChange?.(key); setOpen(false); }}
                                     className={cn(
-                                        'w-full text-left px-3 py-1.5 text-xs font-medium transition-colors',
+                                        'w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors',
                                         'flex items-center justify-between',
                                         period === key
-                                            ? 'bg-primary-600/15 text-primary-600'
-                                            : 'text-gray-400 hover:text-heading hover:bg-edge/5'
+                                            ? 'neu-btn-active'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-heading hover:bg-slate-500/10'
                                     )}
                                 >
                                     <span>{label}</span>
                                     {period === key && (
-                                        <svg className="w-3 h-3 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     )}
                                 </button>
                             ))}
-                            <div className="h-px bg-edge/10 my-1.5 mx-2" />
-                            <p className="px-3 pt-1 pb-1 text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Daily+</p>
+                            <div className="h-px bg-slate-200/60 dark:bg-white/10 my-1 mx-1" />
+                            <p className="px-2 pt-1 pb-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">Daily+</p>
                             {DAILY.map(([key, { label }]) => (
                                 <button
                                     key={key}
                                     onClick={() => { onPeriodChange?.(key); setOpen(false); }}
                                     className={cn(
-                                        'w-full text-left px-3 py-1.5 text-xs font-medium transition-colors',
+                                        'w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors',
                                         'flex items-center justify-between',
                                         period === key
-                                            ? 'bg-primary-600/15 text-primary-600'
-                                            : 'text-gray-400 hover:text-heading hover:bg-edge/5'
+                                            ? 'neu-btn-active'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-heading hover:bg-slate-500/10'
                                     )}
                                 >
                                     <span>{label}</span>
                                     {period === key && (
-                                        <svg className="w-3 h-3 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     )}
                                 </button>
                             ))}
-                            <div className="h-px bg-edge/10 my-1.5 mx-2" />
-                            <p className="px-3 pt-1 pb-1 text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Extended</p>
+                            <div className="h-px bg-slate-200/60 dark:bg-white/10 my-1 mx-1" />
+                            <p className="px-2 pt-1 pb-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">Extended</p>
                             {EXTENDED.map(([key, { label }]) => (
                                 <button
                                     key={key}
                                     onClick={() => { onPeriodChange?.(key); setOpen(false); }}
                                     className={cn(
-                                        'w-full text-left px-3 py-1.5 text-xs font-medium transition-colors',
+                                        'w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors',
                                         'flex items-center justify-between',
                                         period === key
-                                            ? 'bg-primary-600/15 text-primary-600'
-                                            : 'text-gray-400 hover:text-heading hover:bg-edge/5'
+                                            ? 'neu-btn-active'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-heading hover:bg-slate-500/10'
                                     )}
                                 >
                                     <span>{label}</span>
                                     {period === key && (
+                                        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                                         <svg className="w-3 h-3 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
@@ -219,15 +232,15 @@ function ChartHeader({
                             onClick={onToggleWatchlist}
                             disabled={watchlistBusy}
                             className={cn(
-                                'h-7 px-2 rounded-md border text-xs font-semibold',
-                                'inline-flex items-center justify-center transition-colors duration-150 flex-shrink-0',
+                                'h-7 px-2.5 rounded-xl text-xs font-bold',
+                                'inline-flex items-center justify-center transition-all duration-150 flex-shrink-0',
                                 watchlistBusy && 'opacity-60 cursor-not-allowed',
                                 isWatchlisted
-                                    ? 'bg-primary-600/20 border-primary-500/40 text-primary-600'
-                                    : 'bg-surface-800/80 border-edge/20 text-gray-400 hover:text-gray-700 hover:border-edge/40'
+                                    ? 'neu-btn-active text-amber-400 scale-102'
+                                    : 'neu-terminal-pill-btn text-slate-400 hover:text-amber-400 hover:scale-102'
                             )}
-                            title={isWatchlisted ? 'Remove from watchlist' : 'Add to watchlist'}
-                            aria-label={isWatchlisted ? 'Remove from watchlist' : 'Add to watchlist'}
+                            title={isWatchlisted ? 'In Watchlist' : 'Add to Watchlist'}
+                            aria-label={isWatchlisted ? 'In Watchlist' : 'Add to Watchlist'}
                         >
                             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={isWatchlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                                 <path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -237,12 +250,12 @@ function ChartHeader({
                         <button
                             onClick={onToggleStrategyDock}
                             className={cn(
-                                'h-7 px-2.5 rounded-md border text-xs font-semibold',
+                                'h-7 px-2.5 rounded-xl text-xs font-bold',
                                 'inline-flex items-center justify-center gap-1.5',
-                                'transition-colors duration-150 flex-shrink-0',
+                                'transition-all duration-150 flex-shrink-0',
                                 strategyDockOpen
-                                    ? 'bg-primary-600/20 border-primary-500/40 text-primary-600'
-                                    : 'bg-surface-800/80 border-edge/20 text-gray-400 hover:text-gray-700 hover:border-edge/40'
+                                    ? 'neu-btn-active scale-102'
+                                    : 'neu-terminal-pill-btn text-slate-600 dark:text-slate-300 hover:text-heading hover:scale-102'
                             )}
                             title="Toggle Strategy Dock"
                         >
@@ -257,12 +270,12 @@ function ChartHeader({
                             <button
                                 onClick={() => setZlPopup(v => !v)}
                                 className={cn(
-                                    'h-7 px-2.5 rounded-md border text-[11px] font-bold',
+                                    'h-7 px-2.5 rounded-xl text-[11px] font-bold',
                                     'inline-flex items-center justify-center gap-1.5',
-                                    'transition-colors duration-150 flex-shrink-0',
+                                    'transition-all duration-150 flex-shrink-0',
                                     zlEnabled
-                                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-500'
-                                        : 'bg-surface-800/80 border-edge/20 text-gray-500 hover:text-heading hover:border-edge/40'
+                                        ? 'neu-btn-active text-emerald-400 scale-102'
+                                        : 'neu-terminal-pill-btn text-slate-500 hover:text-heading hover:scale-102'
                                 )}
                                 title="Alpha Auto Status"
                             >
@@ -271,23 +284,23 @@ function ChartHeader({
                                 </svg>
                                 <span>ZL</span>
                                 {zlEnabled && zlPosCount > 0 && (
-                                    <span className="px-1 py-0 rounded-full bg-emerald-500/20 text-[9px]">{zlPosCount}</span>
+                                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-[9px] font-extrabold">{zlPosCount}</span>
                                 )}
                             </button>
 
                             {zlPopup && (
-                                <div className="absolute top-full right-0 mt-1.5 z-50 w-[320px] rounded-xl border border-edge/10 bg-surface-900/98 backdrop-blur-xl shadow-xl shadow-black/40 p-3 space-y-2.5">
+                                <div className="absolute top-full right-0 mt-2 z-50 w-[320px] rounded-2xl neu-dash-card shadow-2xl p-4 space-y-3">
                                     {/* Header */}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-heading flex items-center gap-1.5">
-                                            <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <span className="text-xs font-bold text-heading flex items-center gap-1.5">
+                                            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                             </svg>
                                             Alpha Auto
                                         </span>
                                         <span className={cn(
-                                            'px-2 py-0.5 rounded-full text-[9px] font-bold',
-                                            zlEnabled ? 'bg-emerald-500/15 text-emerald-500' : 'bg-gray-500/10 text-gray-500'
+                                            'px-2 py-0.5 rounded-full text-[9px] font-bold neu-dash-badge',
+                                            zlEnabled ? 'text-emerald-500' : 'text-slate-400'
                                         )}>
                                             {zlEnabled ? 'LIVE' : 'OFF'}
                                         </span>
@@ -296,63 +309,22 @@ function ChartHeader({
                                     {/* Quick Stats */}
                                     <div className="grid grid-cols-4 gap-1.5">
                                         {[
-                                            { l: 'Positions', v: zlPosCount, c: zlPosCount > 0 ? 'text-blue-400' : 'text-gray-500' },
+                                            { l: 'Positions', v: zlPosCount, c: zlPosCount > 0 ? 'text-blue-500' : 'text-slate-400' },
                                             { l: 'Trades', v: zlStats?.today_trades ?? 0 },
                                             { l: 'Wins', v: zlStats?.today_profit ?? 0, c: 'text-emerald-500' },
-                                            { l: 'P&L', v: `₹${(zlStats?.today_pnl ?? 0).toFixed(0)}`, c: (zlStats?.today_pnl ?? 0) >= 0 ? 'text-emerald-500' : 'text-red-500' },
+                                            { l: 'P&L', v: `₹${(zlStats?.today_pnl ?? 0).toFixed(0)}`, c: (zlStats?.today_pnl ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500' },
                                         ].map((s, i) => (
-                                            <div key={i} className="text-center p-1.5 rounded-lg bg-surface-800/60">
-                                                <div className="text-[8px] text-gray-600 uppercase">{s.l}</div>
-                                                <div className={cn('text-xs font-semibold font-price tabular-nums', s.c || 'text-heading')}>{s.v}</div>
+                                            <div key={i} className="neu-dash-inset text-center p-2 rounded-xl">
+                                                <div className="text-[8px] text-slate-400 font-bold uppercase">{s.l}</div>
+                                                <div className={cn('text-xs font-bold font-price tabular-nums mt-0.5', s.c || 'text-heading')}>{s.v}</div>
                                             </div>
                                         ))}
                                     </div>
 
-                                    {/* Active Positions Mini List */}
-                                    {zlPosCount > 0 && (
-                                        <div className="space-y-1">
-                                            <div className="text-[9px] text-gray-600 uppercase font-semibold">Active Positions</div>
-                                            {Object.entries(zlPositions).slice(0, 5).map(([sym, pos]) => (
-                                                <div key={sym} className="flex items-center justify-between px-2 py-1 rounded-md bg-surface-800/40 text-[10px]">
-                                                    <span className="font-semibold text-heading">{cleanSymbol(sym)}</span>
-                                                    <span className={cn(
-                                                        'px-1.5 py-0.5 rounded-full text-[9px] font-bold',
-                                                        pos.direction === 'LONG' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-500'
-                                                    )}>
-                                                        {pos.direction}
-                                                    </span>
-                                                    <span className="text-gray-400 font-price tabular-nums">@ {pos.entry_price?.toFixed(2)}</span>
-                                                </div>
-                                            ))}
-                                            {zlPosCount > 5 && (
-                                                <div className="text-[9px] text-gray-500 text-center">+{zlPosCount - 5} more</div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Recent Activity */}
-                                    {zlLog.length > 0 && (
-                                        <div className="space-y-0.5">
-                                            <div className="text-[9px] text-gray-600 uppercase font-semibold">Recent Activity</div>
-                                            {zlLog.filter(l => l.type !== 'scan').slice(0, 4).map((entry, i) => (
-                                                <div key={i} className="text-[10px] text-gray-400 px-1 py-0.5 truncate">
-                                                    <span className={cn(
-                                                        'font-semibold mr-1',
-                                                        entry.type === 'entry' ? 'text-blue-400' :
-                                                            entry.type === 'profit' ? 'text-emerald-500' : 'text-amber-500'
-                                                    )}>
-                                                        {entry.type === 'entry' ? '→' : entry.type === 'profit' ? '✓' : '○'}
-                                                    </span>
-                                                    {entry.message}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
                                     {/* Open Full Page */}
                                     <button
                                         onClick={() => { setZlPopup(false); navigate('/auto-alpha'); }}
-                                        className="w-full text-center py-1.5 rounded-lg bg-primary-600/15 border border-primary-500/20 text-primary-600 text-[11px] font-semibold hover:bg-primary-600/25 transition-colors"
+                                        className="w-full text-center py-2 rounded-xl neu-terminal-pill-btn text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:scale-102 transition-all"
                                     >
                                         Open Alpha Auto Dashboard →
                                     </button>
@@ -363,12 +335,12 @@ function ChartHeader({
                         <button
                             onClick={onToggleOrderPanel}
                             className={cn(
-                                'h-7 px-2.5 rounded-md border text-[11px] font-semibold',
+                                'h-7 px-3 rounded-xl text-[11px] font-bold',
                                 'inline-flex items-center justify-center gap-1.5',
-                                'transition-colors duration-150 flex-shrink-0',
+                                'transition-all duration-150 flex-shrink-0',
                                 orderPanelVisible
-                                    ? 'bg-primary-600/20 border-primary-500/40 text-primary-600'
-                                    : 'bg-surface-800/80 border-edge/20 text-gray-500 hover:text-heading hover:border-edge/40'
+                                    ? 'neu-btn-active scale-102'
+                                    : 'neu-terminal-pill-btn text-slate-600 dark:text-slate-300 hover:text-heading hover:scale-102'
                             )}
                             title={orderPanelVisible ? 'Hide order panel' : 'Show order panel'}
                         >
@@ -381,10 +353,10 @@ function ChartHeader({
                                 onClick={handleKillSwitch}
                                 disabled={killSwitchBusy}
                                 className={cn(
-                                    'h-7 px-2.5 rounded-md border text-[11px] font-bold',
+                                    'h-7 px-2.5 rounded-xl text-[11px] font-extrabold',
                                     'inline-flex items-center justify-center gap-1.5',
-                                    'transition-colors duration-150 flex-shrink-0',
-                                    'bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/25 hover:border-red-500/50',
+                                    'transition-all duration-150 flex-shrink-0',
+                                    'bg-rose-500/15 border border-rose-500/30 text-rose-500 hover:bg-rose-500/25 shadow-sm',
                                     killSwitchBusy && 'opacity-50 cursor-not-allowed'
                                 )}
                                 title="Kill Switch — Close all positions immediately"
