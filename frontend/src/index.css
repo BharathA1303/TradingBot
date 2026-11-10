@@ -1839,3 +1839,54 @@ input[type="number"] {
   background: rgba(24, 32, 50, 0.5);
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3), -1px -1px 4px rgba(255, 255, 255, 0.02);
 }
+
+/* ─── Watchlist Grid & Card Soft-UI Styles ─── */
+.neu-stock-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  box-shadow: 4px 4px 14px rgba(163, 177, 198, 0.25), -4px -4px 14px rgba(255, 255, 255, 0.95);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-stock-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 6px 8px 22px rgba(163, 177, 198, 0.38), -6px -6px 20px rgba(255, 255, 255, 1);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.dark .neu-stock-card {
+  background: rgba(18, 24, 38, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 5px 5px 18px rgba(0, 0, 0, 0.42), -2px -2px 8px rgba(255, 255, 255, 0.025);
+}
+
+.dark .neu-stock-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 7px 8px 24px rgba(0, 0, 0, 0.6), -3px -3px 10px rgba(255, 255, 255, 0.035);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.neu-stock-groove {
+  background: rgba(230, 236, 244, 0.85);
+  box-shadow: inset 1px 1px 3px rgba(163, 177, 198, 0.3), inset -1px -1px 3px rgba(255, 255, 255, 0.8);
+}
+
+.dark .neu-stock-groove {
+  background: rgba(12, 17, 28, 0.8);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.neu-pulse-pill {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 3px 3px 8px rgba(163, 177, 198, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.9);
+}
+
+.dark .neu-pulse-pill {
+  background: rgba(18, 24, 38, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.35);
+}
