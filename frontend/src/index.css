@@ -1621,3 +1621,221 @@ input[type="number"] {
   color: #042f2e;
   box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.4), 0 0 16px rgba(16, 185, 129, 0.4);
 }
+
+/* ─── Dashboard-Exclusive Neumorphic Soft-UI Design System ─── */
+.neu-dash-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: 6px 6px 18px rgba(163, 177, 198, 0.28), -6px -6px 18px rgba(255, 255, 255, 0.95);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .neu-dash-card {
+  background: rgba(18, 24, 38, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.5), -4px -4px 14px rgba(255, 255, 255, 0.025);
+}
+
+.neu-dash-kpi {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 5px 5px 15px rgba(163, 177, 198, 0.28), -5px -5px 15px rgba(255, 255, 255, 0.95);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-dash-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 20px rgba(163, 177, 198, 0.38), -7px -7px 20px rgba(255, 255, 255, 1);
+}
+
+.dark .neu-dash-kpi {
+  background: rgba(18, 24, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.48), -3px -3px 10px rgba(255, 255, 255, 0.025);
+}
+
+.dark .neu-dash-kpi:hover {
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.6), -4px -4px 14px rgba(255, 255, 255, 0.035);
+}
+
+.neu-dash-kpi-profit {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.dark .neu-dash-kpi-profit {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(18, 24, 38, 0.85) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.neu-dash-kpi-loss {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.dark .neu-dash-kpi-loss {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(18, 24, 38, 0.85) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.neu-dash-inset {
+  background: rgba(240, 244, 250, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.32), inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+}
+
+.dark .neu-dash-inset {
+  background: rgba(12, 17, 28, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.03);
+}
+
+.neu-dash-icon-tile {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 2px 2px 6px rgba(163, 177, 198, 0.25), -2px -2px 6px rgba(255, 255, 255, 0.9);
+}
+
+.dark .neu-dash-icon-tile {
+  background: rgba(24, 32, 50, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4), -1px -1px 4px rgba(255, 255, 255, 0.02);
+}
+
+.neu-dash-arrow-tile {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 2px 2px 6px rgba(163, 177, 198, 0.25), -2px -2px 6px rgba(255, 255, 255, 0.9);
+}
+
+.dark .neu-dash-arrow-tile {
+  background: rgba(24, 32, 50, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4), -1px -1px 3px rgba(255, 255, 255, 0.02);
+}
+
+.neu-dash-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 4px 4px 14px rgba(5, 150, 105, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-dash-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 5px 5px 18px rgba(5, 150, 105, 0.45), -2px -2px 10px rgba(255, 255, 255, 0.6);
+}
+
+.neu-dash-btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.neu-dash-pill-btn {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 3px 3px 8px rgba(163, 177, 198, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+}
+
+.neu-dash-pill-btn:hover {
+  box-shadow: 4px 4px 12px rgba(163, 177, 198, 0.35), -4px -4px 12px rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.dark .neu-dash-pill-btn {
+  background: rgba(24, 32, 50, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4), -1px -1px 4px rgba(255, 255, 255, 0.02);
+}
+
+.dark .neu-dash-pill-btn:hover {
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.55), -1px -1px 6px rgba(255, 255, 255, 0.04);
+}
+
+.neu-dash-tab-active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #059669;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 3px 3px 8px rgba(163, 177, 198, 0.3), -3px -3px 8px rgba(255, 255, 255, 0.95);
+}
+
+.dark .neu-dash-tab-active {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.2), inset 1px 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.neu-dash-timeframe-active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #059669;
+  box-shadow: 2px 2px 6px rgba(163, 177, 198, 0.3), -2px -2px 6px rgba(255, 255, 255, 0.95);
+}
+
+.dark .neu-dash-timeframe-active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.neu-dash-action-row {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 4px 4px 12px rgba(163, 177, 198, 0.22), -4px -4px 12px rgba(255, 255, 255, 0.9);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-dash-action-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 16px rgba(163, 177, 198, 0.32), -6px -6px 16px rgba(255, 255, 255, 1);
+}
+
+.dark .neu-dash-action-row {
+  background: rgba(21, 28, 44, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 5px 5px 14px rgba(0, 0, 0, 0.4), -2px -2px 8px rgba(255, 255, 255, 0.02);
+}
+
+.dark .neu-dash-action-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 18px rgba(0, 0, 0, 0.55), -3px -3px 10px rgba(255, 255, 255, 0.035);
+}
+
+.neu-dash-action-accent {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.dark .neu-dash-action-accent {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(21, 28, 44, 0.75) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.neu-dash-badge {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 1px 1px 3px rgba(163, 177, 198, 0.2), inset -1px -1px 3px rgba(255, 255, 255, 0.8);
+}
+
+.dark .neu-dash-badge {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.neu-dash-row-hover:hover {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 2px 2px 8px rgba(163, 177, 198, 0.2), -2px -2px 8px rgba(255, 255, 255, 0.8);
+}
+
+.dark .neu-dash-row-hover:hover {
+  background: rgba(24, 32, 50, 0.5);
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3), -1px -1px 4px rgba(255, 255, 255, 0.02);
+}

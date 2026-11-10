@@ -476,7 +476,7 @@ export default function DashboardWorkspace() {
     ];
 
     return (
-        <div className="p-4 lg:p-6 space-y-5 animate-fade-in relative">
+        <div className="neu-dashboard-workspace p-4 lg:p-6 space-y-6 animate-fade-in relative">
             {/* Loading overlay — fades out smoothly */}
             <div
                 className="absolute inset-0 z-10 p-4 lg:p-6 space-y-6 transition-opacity duration-300"
@@ -486,64 +486,77 @@ export default function DashboardWorkspace() {
                     background: 'var(--bg-base, #0f0f1e)',
                 }}
             >
-                <Skeleton variant="text" className="h-8 w-48" />
+                <Skeleton variant="text" className="h-8 w-48 rounded-xl" />
                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
                     {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className={cn('kpi-card', i === 4 && 'col-span-2')}>
-                            <Skeleton variant="text" className="h-3 w-20" />
-                            <Skeleton variant="text" className="h-7 w-28 mt-2" />
+                        <div key={i} className={cn('neu-dash-kpi p-4', i === 4 && 'col-span-2')}>
+                            <Skeleton variant="text" className="h-3 w-20 rounded-md" />
+                            <Skeleton variant="text" className="h-7 w-28 mt-2 rounded-lg" />
                         </div>
                     ))}
                 </div>
-                <Skeleton variant="chart" className="h-40" />
+                <Skeleton variant="chart" className="h-44 rounded-3xl" />
             </div>
 
             {/* Welcome Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-display font-semibold text-heading">
+                    <h1 className="text-2xl font-display font-bold text-heading tracking-tight">
                         Welcome, {user?.full_name?.split(' ')[0] || user?.username || 'Trader'}
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link to="/terminal" className="btn-primary text-sm hidden sm:inline-flex items-center gap-2" aria-label="Open trading terminal">
-                        Trade Now <ArrowRight className="w-4 h-4" />
+                    <Link
+                        to="/terminal"
+                        className="neu-dash-btn-primary hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white transition-all group"
+                        aria-label="Open trading terminal"
+                    >
+                        <span>Trade Now</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
             </div>
 
             {/* KPI Bar */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5">
                 {kpiCards.map(({ label, value, icon: Icon, iconColor }) => (
-                    <div key={label} className="kpi-card">
+                    <div key={label} className="neu-dash-kpi p-4 flex flex-col justify-between">
                         <div className="flex items-center justify-between">
-                            <span className="metric-label">{label}</span>
-                            <Icon className={cn('w-4 h-4', iconColor)} />
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">{label}</span>
+                            <div className="w-8 h-8 rounded-xl neu-dash-icon-tile flex items-center justify-center flex-shrink-0">
+                                <Icon className={cn('w-4 h-4', iconColor)} />
+                            </div>
                         </div>
-                        <span className="text-lg font-price font-semibold text-heading tabular-nums mt-1">
+                        <span className="text-lg sm:text-xl font-price font-bold text-heading tabular-nums mt-2">
                             {value}
                         </span>
                     </div>
                 ))}
 
                 <div className={cn(
-                    'kpi-card-highlight',
-                    totalPnl >= 0
-                        ? 'bg-gradient-to-br from-green-500/[0.07] to-surface-900/60 border-green-500/10'
-                        : 'bg-gradient-to-br from-red-500/[0.07] to-surface-900/60 border-red-500/10'
+                    'neu-dash-kpi p-4 flex flex-col justify-between col-span-2 relative overflow-hidden',
+                    totalPnl >= 0 ? 'neu-dash-kpi-profit' : 'neu-dash-kpi-loss'
                 )}>
                     <div className="flex items-center justify-between">
-                        <span className="metric-label">TOTAL P&amp;L</span>
-                        {totalPnl >= 0
-                            ? <TrendingUp className="w-5 h-5 text-profit" />
-                            : <TrendingDown className="w-5 h-5 text-loss" />
-                        }
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">TOTAL P&amp;L</span>
+                        <div className={cn(
+                            'w-8 h-8 rounded-xl neu-dash-icon-tile flex items-center justify-center flex-shrink-0',
+                            totalPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                        )}>
+                            {totalPnl >= 0
+                                ? <TrendingUp className="w-4 h-4 text-emerald-500" />
+                                : <TrendingDown className="w-4 h-4 text-rose-500" />
+                            }
+                        </div>
                     </div>
-                    <div className="flex items-end gap-3 mt-1">
-                        <span className={cn('text-3xl font-price font-semibold tabular-nums', pnlColorClass(totalPnl))}>
+                    <div className="flex items-end gap-3 mt-2">
+                        <span className={cn('text-2xl sm:text-3xl font-price font-bold tabular-nums', pnlColorClass(totalPnl))}>
                             {totalPnl >= 0 ? '+' : ''}{formatCurrency(totalPnl)}
                         </span>
-                        <span className={cn('text-sm font-price mb-1 tabular-nums', pnlColorClass(totalPnl))}>
+                        <span className={cn(
+                            'text-xs font-price font-bold px-2.5 py-0.5 rounded-full neu-dash-badge tabular-nums mb-1',
+                            pnlColorClass(totalPnl)
+                        )}>
                             {totalPnl >= 0 ? '▲' : '▼'} {formatPercent(totalPnlPct)}
                         </span>
                     </div>
@@ -552,13 +565,12 @@ export default function DashboardWorkspace() {
 
             {/* Market + Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-3 rounded-xl border border-edge/5 bg-surface-900/60 p-5 flex flex-col justify-between">
+                <div className="lg:col-span-3 neu-dash-card p-5 lg:p-6 flex flex-col justify-between">
                     <div>
                         {/* Section Header with Tabs */}
-                        {/* Section Header with Tabs */}
-                        <div className="border-b border-edge/10 pb-1 mb-5">
-                            <h2 className="text-base font-bold text-heading tracking-wide uppercase mb-3">Market Overview</h2>
-                            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar scroll-smooth">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-200/50 dark:border-white/5">
+                            <h2 className="text-xs font-extrabold text-heading tracking-wider uppercase">Market Overview</h2>
+                            <div className="neu-dash-inset p-1 rounded-2xl flex items-center gap-1 overflow-x-auto no-scrollbar">
                                 {[
                                     { symbol: '^NSEI', name: 'NIFTY 50' },
                                     { symbol: '^BSESN', name: 'SENSEX' },
@@ -571,10 +583,10 @@ export default function DashboardWorkspace() {
                                             key={tab.symbol}
                                             onClick={() => setActiveTab(tab.symbol)}
                                             className={cn(
-                                                'pb-2 text-sm font-semibold border-b-2 transition-all duration-150 relative -mb-[2px]',
+                                                'px-3 py-1 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap',
                                                 active
-                                                    ? 'border-primary-600 text-primary-600 font-bold'
-                                                    : 'border-transparent text-[var(--text-secondary)] hover:text-heading'
+                                                    ? 'neu-dash-tab-active'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-heading'
                                             )}
                                         >
                                             {tab.name}
@@ -585,27 +597,27 @@ export default function DashboardWorkspace() {
                         </div>
 
                         {/* Large Price Quote and Timeframe select */}
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-4 mt-2">
                             <div className="space-y-1">
-                                <div className="flex items-baseline gap-2.5">
-                                    <span className="text-3xl font-price font-semibold text-heading tracking-tight tabular-nums">
+                                <div className="flex items-baseline gap-2.5 flex-wrap">
+                                    <span className="text-3xl sm:text-4xl font-price font-extrabold text-heading tracking-tight tabular-nums">
                                         {Number(selectedIndexQuote?.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </span>
                                     <span className={cn(
-                                        'text-xs font-price font-semibold px-2 py-0.5 rounded flex items-center gap-1 tabular-nums',
-                                        (selectedIndexQuote?.change ?? 0) >= 0 ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'
+                                        'text-xs font-price font-bold px-2.5 py-0.5 rounded-full neu-dash-badge flex items-center gap-1 tabular-nums',
+                                        (selectedIndexQuote?.change ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'
                                     )}>
                                         {(selectedIndexQuote?.change ?? 0) >= 0 ? '▲' : '▼'}
                                         {Math.abs(selectedIndexQuote?.change_percent ?? 0).toFixed(2)}% ({(selectedIndexQuote?.change ?? 0) > 0 ? '+' : ''}{formatPrice(selectedIndexQuote?.change)})
                                     </span>
                                 </div>
-                                <div className="text-[11px] text-[var(--text-muted)] font-medium">
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                                     {formatQuoteTime(selectedIndexQuote?.timestamp)}
                                 </div>
                             </div>
 
                             {/* Timeframe pill selector */}
-                            <div className="flex items-center bg-[var(--bg-base)] p-0.5 rounded-lg border border-edge/10">
+                            <div className="neu-dash-inset p-1 rounded-xl flex items-center gap-1 flex-shrink-0">
                                 {['1D', '1W', '1M', '1Y'].map((t) => {
                                     const active = timeframe === t;
                                     return (
@@ -613,10 +625,10 @@ export default function DashboardWorkspace() {
                                             key={t}
                                             onClick={() => setTimeframe(t)}
                                             className={cn(
-                                                'px-2.5 py-1 text-[10px] font-bold rounded-md transition-all duration-150',
+                                                'px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all duration-150',
                                                 active
-                                                    ? 'bg-primary-500/10 text-primary-600 shadow-sm'
-                                                    : 'text-[var(--text-muted)] hover:text-heading hover:bg-surface-800/20'
+                                                    ? 'neu-dash-timeframe-active'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-heading'
                                             )}
                                         >
                                             {t}
@@ -637,105 +649,106 @@ export default function DashboardWorkspace() {
                     </div>
 
                     {/* Dynamic Footer stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 border-t border-edge/10 pt-4 mt-3">
-                        <div className="bg-surface-800/20 border border-edge/[0.03] p-2 rounded-lg text-center">
-                            <span className="metric-label block text-[10px]">Day Low</span>
-                            <span className="text-xs font-price font-bold text-heading mt-0.5 block tabular-nums">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-4 mt-2">
+                        <div className="neu-dash-inset p-2.5 rounded-xl text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Day Low</span>
+                            <span className="text-xs font-price font-extrabold text-heading mt-0.5 block tabular-nums">
                                 {Number(selectedIndexQuote?.low).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </span>
                         </div>
-                        <div className="bg-surface-800/20 border border-edge/[0.03] p-2 rounded-lg text-center">
-                            <span className="metric-label block text-[10px]">Day High</span>
-                            <span className="text-xs font-price font-bold text-heading mt-0.5 block tabular-nums">
+                        <div className="neu-dash-inset p-2.5 rounded-xl text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Day High</span>
+                            <span className="text-xs font-price font-extrabold text-heading mt-0.5 block tabular-nums">
                                 {Number(selectedIndexQuote?.high).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </span>
                         </div>
-                        <div className="bg-surface-800/20 border border-edge/[0.03] p-2 rounded-lg text-center">
-                            <span className="metric-label block text-[10px] text-profit font-semibold">Advances</span>
-                            <span className="text-xs font-price font-bold text-profit mt-0.5 block tabular-nums">
+                        <div className="neu-dash-inset p-2.5 rounded-xl text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 block">Advances</span>
+                            <span className="text-xs font-price font-extrabold text-emerald-500 mt-0.5 block tabular-nums">
                                 {selectedIndexQuote?.advances ?? 0}
                             </span>
                         </div>
-                        <div className="bg-surface-800/20 border border-edge/[0.03] p-2 rounded-lg text-center">
-                            <span className="metric-label block text-[10px] text-loss font-semibold">Declines</span>
-                            <span className="text-xs font-price font-bold text-loss mt-0.5 block tabular-nums">
+                        <div className="neu-dash-inset p-2.5 rounded-xl text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 block">Declines</span>
+                            <span className="text-xs font-price font-extrabold text-rose-500 mt-0.5 block tabular-nums">
                                 {selectedIndexQuote?.declines ?? 0}
                             </span>
                         </div>
-                        <div className="bg-surface-800/20 border border-edge/[0.03] p-2 rounded-lg text-center col-span-2 sm:col-span-1">
-                            <span className="metric-label block text-[10px]">Unchanged</span>
-                            <span className="text-xs font-price font-bold text-[var(--text-secondary)] mt-0.5 block tabular-nums">
+                        <div className="neu-dash-inset p-2.5 rounded-xl text-center col-span-2 sm:col-span-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Unchanged</span>
+                            <span className="text-xs font-price font-extrabold text-slate-600 dark:text-slate-300 mt-0.5 block tabular-nums">
                                 {selectedIndexQuote?.unchanged ?? 0}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="lg:col-span-2 rounded-xl border border-edge/5 bg-surface-900/60 p-5 section-card card-hover-glow">
-                    <h2 className="section-title text-sm text-heading mb-4">Quick Actions</h2>
-                    <div className="space-y-2">
-                        {NAV_CARDS.slice(0, 4).map(({ to, icon: Icon, label, desc, accent }) => (
-                            <Link
-                                key={to}
-                                to={to}
-                                className={cn(
-                                    'flex items-center justify-between p-3.5 rounded-lg border transition-all duration-150 group table-row-hover',
-                                    accent
-                                        ? 'border-primary-500/20 bg-primary-600/[0.04] hover:border-primary-500/35'
-                                        : 'border-edge/10 bg-surface-800/40 hover:border-edge/20'
-                                )}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={cn(
-                                        'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                                        accent ? 'bg-primary-500/15' : 'bg-surface-800/80'
-                                    )}>
-                                        <Icon className={cn('w-4 h-4', accent ? 'text-primary-600' : 'text-gray-500')} />
+                <div className="lg:col-span-2 neu-dash-card p-5 lg:p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 className="text-xs font-extrabold text-heading tracking-wider uppercase mb-4">Quick Actions</h2>
+                        <div className="space-y-3">
+                            {NAV_CARDS.slice(0, 4).map(({ to, icon: Icon, label, desc, accent }) => (
+                                <Link
+                                    key={to}
+                                    to={to}
+                                    className={cn(
+                                        'neu-dash-action-row flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200 group',
+                                        accent ? 'neu-dash-action-accent' : ''
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl neu-dash-icon-tile flex items-center justify-center flex-shrink-0">
+                                            <Icon className={cn('w-4 h-4', accent ? 'text-emerald-500' : 'text-slate-500 dark:text-slate-400 group-hover:text-heading')} />
+                                        </div>
+                                        <div>
+                                            <span className={cn('text-sm font-bold block', accent ? 'text-emerald-500' : 'text-heading')}>
+                                                {label}
+                                            </span>
+                                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{desc}</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className={cn('text-sm font-semibold block', accent ? 'text-primary-600' : 'text-heading')}>
-                                            {label}
-                                        </span>
-                                        <span className="text-[11px] text-gray-600">{desc}</span>
+                                    <div className="w-7 h-7 rounded-full neu-dash-arrow-tile flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                                        <ArrowRight className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-heading" />
                                     </div>
-                                </div>
-                                <ArrowRight className={cn('w-4 h-4 group-hover:translate-x-0.5 transition-transform', accent ? 'text-primary-600' : 'text-gray-500')} />
-                            </Link>
-                        ))}
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Holdings + Recent Orders */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-edge/5 bg-surface-900/60 p-5 section-card card-hover-glow">
+                <div className="neu-dash-card p-5 lg:p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="section-title text-sm text-heading">Top Holdings</h2>
-                        <Link to="/portfolio" className="text-xs text-primary-600 hover:text-primary-500 transition-colors font-medium">View All →</Link>
+                        <h2 className="text-xs font-extrabold text-heading tracking-wider uppercase">Top Holdings</h2>
+                        <Link to="/portfolio" className="neu-dash-pill-btn text-xs font-bold text-emerald-600 dark:text-emerald-400 px-3.5 py-1.5 rounded-full transition-all">
+                            View All →
+                        </Link>
                     </div>
                     {topHoldings.length > 0 ? (
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                             {topHoldings.map((holding, i) => (
                                 <button
                                     type="button"
                                     key={`${holding.symbol}-${i}`}
                                     onClick={() => navigate(`/terminal?symbol=${encodeURIComponent(holding.symbol)}`)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-800/40 transition-colors text-left table-row-hover"
+                                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl neu-dash-row-hover transition-all text-left group"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-[11px] font-semibold text-primary-600 flex-shrink-0">
+                                        <div className="w-8 h-8 rounded-xl neu-dash-icon-tile flex items-center justify-center text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                                             {(cleanSymbol(holding.symbol) || '??').slice(0, 2)}
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-heading">{cleanSymbol(holding.symbol)}</div>
-                                            <div className="text-[11px] text-gray-600 font-price tabular-nums">
+                                            <div className="text-sm font-bold text-heading group-hover:text-emerald-500 transition-colors">{cleanSymbol(holding.symbol)}</div>
+                                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-price tabular-nums">
                                                 {holding.quantity} × {formatCurrency(holding.avg_price)}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm font-price font-semibold text-heading tabular-nums">{formatCurrency(holding.current_value)}</div>
-                                        <div className={cn('text-[11px] font-price tabular-nums', pnlColorClass(holding.pnl))}>
+                                        <div className="text-sm font-price font-bold text-heading tabular-nums">{formatCurrency(holding.current_value)}</div>
+                                        <div className={cn('text-[11px] font-price font-semibold tabular-nums', pnlColorClass(holding.pnl))}>
                                             {(holding.pnl ?? 0) >= 0 ? '+' : ''}{formatCurrency(holding.pnl)} ({formatPercent(holding.pnl_percent)})
                                         </div>
                                     </div>
@@ -744,52 +757,56 @@ export default function DashboardWorkspace() {
                         </div>
                     ) : (
                         <div className="text-center py-10">
-                            <IndianRupee className="w-10 h-10 mx-auto mb-2 text-gray-600 opacity-30" />
-                            <p className="text-sm font-medium text-gray-500">No holdings yet</p>
-                            <Link to="/terminal" className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary-600 hover:text-primary-500 font-medium transition-colors">
+                            <div className="w-14 h-14 rounded-2xl neu-dash-inset mx-auto mb-3 flex items-center justify-center text-slate-400">
+                                <IndianRupee className="w-7 h-7" />
+                            </div>
+                            <p className="text-sm font-semibold text-slate-500">No holdings yet</p>
+                            <Link to="/terminal" className="inline-flex items-center gap-1.5 mt-3 neu-dash-pill-btn text-xs font-bold text-emerald-600 dark:text-emerald-400 px-4 py-1.5 rounded-full">
                                 Start trading <ArrowRight className="w-3 h-3" />
                             </Link>
                         </div>
                     )}
                 </div>
 
-                <div className="rounded-xl border border-edge/5 bg-surface-900/60 p-5 section-card card-hover-glow">
+                <div className="neu-dash-card p-5 lg:p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="section-title text-sm text-heading">Recent Orders</h2>
-                        <Link to="/orders" className="text-xs text-primary-600 hover:text-primary-500 transition-colors font-medium">View All →</Link>
+                        <h2 className="text-xs font-extrabold text-heading tracking-wider uppercase">Recent Orders</h2>
+                        <Link to="/orders" className="neu-dash-pill-btn text-xs font-bold text-emerald-600 dark:text-emerald-400 px-3.5 py-1.5 rounded-full transition-all">
+                            View All →
+                        </Link>
                     </div>
                     {recentOrders.length > 0 ? (
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                             {recentOrders.map((order, i) => (
                                 <button
                                     type="button"
                                     key={`${order.id || order.order_id || i}`}
                                     onClick={() => navigate(`/terminal?symbol=${encodeURIComponent(order.symbol || '')}`)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-800/40 transition-colors text-left table-row-hover"
+                                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl neu-dash-row-hover transition-all text-left group"
                                 >
                                     <div className="flex items-center gap-3">
                                         <span className={cn(
-                                            'text-[11px] font-semibold px-2 py-0.5 rounded-md',
-                                            order.side === 'BUY' ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'
+                                            'text-[10px] font-bold px-2 py-0.5 rounded-md neu-dash-badge',
+                                            order.side === 'BUY' ? 'text-emerald-500' : 'text-rose-500'
                                         )}>
                                             {order.side || '—'}
                                         </span>
                                         <div>
-                                            <div className="text-sm font-semibold text-heading">{cleanSymbol(order.symbol || 'N/A')}</div>
-                                            <div className="text-[11px] text-gray-600 font-price tabular-nums">{order.quantity ?? 0} qty</div>
+                                            <div className="text-sm font-bold text-heading group-hover:text-emerald-500 transition-colors">{cleanSymbol(order.symbol || 'N/A')}</div>
+                                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-price tabular-nums">{order.quantity ?? 0} qty</div>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm font-price font-semibold text-heading tabular-nums">
+                                        <div className="text-sm font-price font-bold text-heading tabular-nums">
                                             {formatCurrency(order.filled_price ?? order.price)}
                                         </div>
                                         <span className={cn(
-                                            'text-[10px] px-1.5 py-0.5 rounded font-semibold',
+                                            'text-[10px] px-2 py-0.5 rounded-full font-bold neu-dash-badge',
                                             order.status === 'FILLED'
-                                                ? 'text-profit bg-profit/10'
+                                                ? 'text-emerald-500'
                                                 : order.status === 'REJECTED' || order.status === 'CANCELLED'
-                                                    ? 'text-loss bg-loss/10'
-                                                    : 'text-primary-600 bg-primary-500/10'
+                                                    ? 'text-rose-500'
+                                                    : 'text-amber-500'
                                         )}>
                                             {order.status || 'PENDING'}
                                         </span>
@@ -799,8 +816,10 @@ export default function DashboardWorkspace() {
                         </div>
                     ) : (
                         <div className="text-center py-10">
-                            <ClipboardList className="w-10 h-10 mx-auto mb-2 text-gray-600 opacity-30" />
-                            <p className="text-sm font-medium text-gray-500">No orders yet</p>
+                            <div className="w-14 h-14 rounded-2xl neu-dash-inset mx-auto mb-3 flex items-center justify-center text-slate-400">
+                                <ClipboardList className="w-7 h-7" />
+                            </div>
+                            <p className="text-sm font-semibold text-slate-500">No orders yet</p>
                         </div>
                     )}
                 </div>
